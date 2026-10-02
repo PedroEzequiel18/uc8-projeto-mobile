@@ -34,8 +34,7 @@ function carregarTransacoes(): Promise<Transacao[]> {
 
 export default function App() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
-  const [carregando, setCarregando] =
-    useState(true);
+  const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     carregarTransacoes().then((dados) => {
