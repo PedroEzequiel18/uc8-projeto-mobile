@@ -1,5 +1,11 @@
-import TelaTransacoes from "./src/telas/TelaTransacoes";
+import { NavigationContainer } from '@react-navigation/native';
+
+import NavegacaoPrincipal from './src/navegacao/NavegacaoPrincipal';
 
 export default function App() {
-  return <TelaTransacoes />;
+  return (
+    <NavigationContainer>
+      <NavegacaoPrincipal />
+    </NavigationContainer>
+  );
 }
