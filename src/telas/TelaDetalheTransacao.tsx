@@ -1,6 +1,12 @@
-import { View, Text } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+} from 'react-native';
+
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { cores, espacos } from '../tema/tema';
 import type { RotasDaPilha } from '../navegacao/tipos';
 
 type TelaDetalheTransacaoProps =
@@ -15,10 +21,34 @@ export default function TelaDetalheTransacao({
   const { id } = route.params;
 
   return (
-    <View>
-      <Text>Detalhe da Transação</Text>
+    <View style={styles.container}>
+      <Text style={styles.titulo}>
+        Detalhe da Transação
+      </Text>
 
-      <Text>ID: {id}</Text>
+      <Text style={styles.id}>
+        ID: {id}
+      </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: cores.papel,
+    padding: espacos.md,
+  },
+
+  titulo: {
+    color: cores.tinta,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: espacos.md,
+  },
+
+  id: {
+    color: cores.tintaSuave,
+    fontSize: 16,
+  },
+});

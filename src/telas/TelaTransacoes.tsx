@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { FlatList, StyleSheet, Text } from 'react-native';
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  ActivityIndicator,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { CartaoTransacao } from '../components/CartaoTransacao';
 import { FormularioTransacao } from '../components/FormularioTransacao';
 
 import type { Transacao } from '../types/Transacao';
+import { cores, espacos } from '../tema/tema';
 
 function carregarTransacoes(): Promise<Transacao[]> {
   return new Promise((resolve) => {
@@ -32,9 +40,16 @@ function carregarTransacoes(): Promise<Transacao[]> {
   });
 }
 
-export default function App() {
-  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
-  const [carregando, setCarregando] = useState(true);
+export default function TelaTransacoes() {
+  const [transacoes, setTransacoes] =
+    useState<Transacao[]>([]);
+
+  const [carregando, setCarregando] =
+    useState(true);
+
+  const { width } = useWindowDimensions();
+
+  const duasColunas = width >= 600;
 
   useEffect(() => {
     carregarTransacoes().then((dados) => {
@@ -55,7 +70,6 @@ export default function App() {
             (transacao) => transacao.id,
           ),
         ) + 1,
-
       nome,
       descricao,
       valor: 0,
@@ -71,18 +85,33 @@ export default function App() {
 
   if (carregando) {
     return (
-      <Text style={styles.titulo}>
-        Carregando transações...
-      </Text>
+      <View style={styles.centro}>
+        <ActivityIndicator size="large" />
+
+        <Text style={styles.carregando}>
+          Carregando transações...
+        </Text>
+      </View>
     );
   }
 
   return (
     <>
       <FlatList
-        contentContainerStyle={styles.container}
+        key={duasColunas ? 'duas' : 'uma'}
+        numColumns={duasColunas ? 2 : 1}
+        columnWrapperStyle={
+          duasColunas
+            ? styles.linhaDeColunas
+            : undefined
+        }
+        contentContainerStyle={
+          styles.container
+        }
         data={transacoes}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item) =>
+          String(item.id)
+        }
         ListHeaderComponent={
           <>
             <Text style={styles.titulo}>
@@ -95,31 +124,64 @@ export default function App() {
           </>
         }
         renderItem={({ item }) => (
-          <CartaoTransacao
-            transacao={item}
-            destaque={item.id === 1}
-          />
+          <View style={styles.celula}>
+            <CartaoTransacao
+              transacao={item}
+              destaque={item.id === 1}
+            />
+          </View>
         )}
         ListEmptyComponent={
-          <Text>Nenhuma transação cadastrada.</Text>
+          <Text style={styles.vazio}>
+            Nenhuma transação cadastrada.
+          </Text>
         }
       />
 
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    gap: 20,
+    padding: espacos.md,
+    gap: espacos.md,
+    backgroundColor: cores.papel,
+    flexGrow: 1,
   },
 
   titulo: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: espacos.lg,
+    marginBottom: espacos.md,
+    color: cores.tinta,
+  },
+
+  centro: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: cores.papel,
+  },
+
+  carregando: {
+    marginTop: espacos.sm,
+    color: cores.tinta,
+  },
+
+  vazio: {
+    textAlign: 'center',
+    color: cores.tintaSuave,
+  },
+
+  linhaDeColunas: {
+    gap: espacos.sm,
+  },
+
+  celula: {
+    flex: 1,
   },
 });
