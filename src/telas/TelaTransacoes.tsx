@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   FlatList,
@@ -12,78 +11,21 @@ import {
 import { CartaoTransacao } from '../components/CartaoTransacao';
 import { FormularioTransacao } from '../components/FormularioTransacao';
 
-import type { Transacao } from '../types/Transacao';
+import { useTransacoes } from '../contexto/TransacoesContexto';
+
 import { cores, espacos } from '../tema/tema';
 
-function carregarTransacoes(): Promise<Transacao[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: 1,
-          nome: 'Salário',
-          descricao: 'Mensal de pagamento',
-          valor: 3500,
-          id_categoria: 1,
-          data: '18/09/2026',
-        },
-        {
-          id: 2,
-          nome: 'Internet',
-          descricao: 'Conta mensal',
-          valor: 120,
-          id_categoria: 2,
-          data: '18/09/2026',
-        },
-      ]);
-    }, 1000);
-  });
-}
-
 export default function TelaTransacoes() {
-  const [transacoes, setTransacoes] =
-    useState<Transacao[]>([]);
+  const { estado, adicionar } =
+    useTransacoes();
 
-  const [carregando, setCarregando] =
-    useState(true);
+  const { width } =
+    useWindowDimensions();
 
-  const { width } = useWindowDimensions();
+  const duasColunas =
+    width >= 600;
 
-  const duasColunas = width >= 600;
-
-  useEffect(() => {
-    carregarTransacoes().then((dados) => {
-      setTransacoes(dados);
-      setCarregando(false);
-    });
-  }, []);
-
-  function adicionarTransacao(
-    nome: string,
-    descricao: string,
-  ): void {
-    const novaTransacao: Transacao = {
-      id:
-        Math.max(
-          0,
-          ...transacoes.map(
-            (transacao) => transacao.id,
-          ),
-        ) + 1,
-      nome,
-      descricao,
-      valor: 0,
-      id_categoria: 1,
-      data: new Date().toLocaleDateString(),
-    };
-
-    setTransacoes([
-      ...transacoes,
-      novaTransacao,
-    ]);
-  }
-
-  if (carregando) {
+  if (estado.tipo === 'carregando') {
     return (
       <View style={styles.centro}>
         <ActivityIndicator size="large" />
@@ -108,7 +50,7 @@ export default function TelaTransacoes() {
         contentContainerStyle={
           styles.container
         }
-        data={transacoes}
+        data={estado.transacoes}
         keyExtractor={(item) =>
           String(item.id)
         }
@@ -119,7 +61,7 @@ export default function TelaTransacoes() {
             </Text>
 
             <FormularioTransacao
-              aoCriar={adicionarTransacao}
+              aoCriar={adicionar}
             />
           </>
         }

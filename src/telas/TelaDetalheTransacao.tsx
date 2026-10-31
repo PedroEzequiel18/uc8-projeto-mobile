@@ -6,6 +6,8 @@ import {
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { useTransacoes } from '../contexto/TransacoesContexto';
+
 import { cores, espacos } from '../tema/tema';
 import type { RotasDaPilha } from '../navegacao/tipos';
 
@@ -20,14 +22,40 @@ export default function TelaDetalheTransacao({
 }: TelaDetalheTransacaoProps) {
   const { id } = route.params;
 
+  const { buscar } = useTransacoes();
+
+  const transacao = buscar(id);
+
+  if (transacao === undefined) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.titulo}>
+          Transação não encontrada
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>
-        Detalhe da Transação
+        {transacao.nome}
       </Text>
 
-      <Text style={styles.id}>
-        ID: {id}
+      <Text style={styles.texto}>
+        {transacao.descricao}
+      </Text>
+
+      <Text style={styles.texto}>
+        Valor: R$ {transacao.valor}
+      </Text>
+
+      <Text style={styles.texto}>
+        Data: {transacao.data}
+      </Text>
+
+      <Text style={styles.texto}>
+        Categoria: {transacao.id_categoria}
       </Text>
     </View>
   );
@@ -47,8 +75,8 @@ const styles = StyleSheet.create({
     marginBottom: espacos.md,
   },
 
-  id: {
+  texto: {
     color: cores.tintaSuave,
-    fontSize: 16,
+    marginBottom: espacos.sm,
   },
 });

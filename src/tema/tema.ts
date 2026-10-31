@@ -1,19 +1,20 @@
 export const cores = {
   papel: '#f5f1e6',
-  papelCartao: '#fffdf7',
+  papelCartao: '#fbfaf5',
   papelLinha: '#ddd3ba',
 
   tinta: '#20301f',
   tintaSuave: '#5f6b57',
 
-  receita: '#1b6b4a',
-  receitaFundo: '#e6f2ea',
+  receita: '#2d6d5c',
+  receitaFundo: '#e3efea',
 
-  despesa: '#8a2f22',
-  despesaFundo: '#f7e9e3',
+  despesa: '#8a4b43',
+  despesaFundo: '#f4e7e4',
 
-  dourado: '#a9822f',
-  borda: '#d9cfae',
+  dourado: '#b59a59',
+
+  borda: '#d8d2c0',
 };
 
 export const espacos = {

@@ -10,6 +10,7 @@ import { Botao } from './Botao';
 
 import type { RotasDaPilha } from '../navegacao/tipos';
 import type { Transacao } from '../types/Transacao';
+
 import {
   cores,
   espacos,
@@ -79,6 +80,16 @@ const estilos = StyleSheet.create({
     borderRadius: raio,
     padding: espacos.md,
     marginBottom: espacos.sm,
+
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+
+    elevation: 2,
   },
 
   titulo: {
