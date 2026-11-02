@@ -4,71 +4,110 @@ import {
   useEffect,
   useState,
   type ReactNode,
-} from "react";
+} from 'react';
 
-import type { Transacao } from "../types/Transacao";
+import type { Transacao } from '../types/Transacao';
 
-import { carregarTransacoes, incluirTransacao } from "../servicos/transacoes";
+import {
+  guardarLocal,
+} from '../banco/banco';
+
+import {
+  carregarTransacoes,
+  incluirTransacao,
+} from '../servicos/transacoes';
 
 export type EstadoTransacoes =
-  | { tipo: "carregando" }
+  | { tipo: 'carregando' }
   | {
-      tipo: "pronto";
+      tipo: 'pronto';
       transacoes: Transacao[];
     };
 
 interface ValorDasTransacoes {
   estado: EstadoTransacoes;
 
-  adicionar: (nome: string, descricao: string) => Promise<void>;
+  adicionar: (
+    nome: string,
+    descricao: string,
+  ) => Promise<void>;
 
-  buscar: (id: number) => Transacao | undefined;
+  buscar: (
+    id: number,
+  ) => Transacao | undefined;
 }
 
-const TransacoesContexto = createContext<ValorDasTransacoes | undefined>(
-  undefined,
-);
+const TransacoesContexto =
+  createContext<
+    ValorDasTransacoes | undefined
+  >(undefined);
 
-export function TransacoesProvedor({ children }: { children: ReactNode }) {
-  const [estado, setEstado] = useState<EstadoTransacoes>({
-    tipo: "carregando",
-  });
+export function TransacoesProvedor({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const [estado, setEstado] =
+    useState<EstadoTransacoes>({
+      tipo: 'carregando',
+    });
 
   useEffect(() => {
-    carregarTransacoes().then((transacoes) => {
-      setEstado({
-        tipo: "pronto",
-        transacoes,
+    carregarTransacoes()
+      .then((transacoes) => {
+        setEstado({
+          tipo: 'pronto',
+          transacoes,
+        });
+
+        guardarLocal(
+          transacoes,
+        ).catch((erro: unknown) => {
+          console.warn(
+            'Não foi possível guardar no aparelho',
+            erro,
+          );
+        });
       });
-    });
   }, []);
 
-  async function adicionar(nome: string, descricao: string) {
-    const novaTransacao = await incluirTransacao({
-      nome,
-      descricao,
-      valor: 0,
-      id_categoria: 1,
-      data: new Date().toLocaleDateString(),
-    });
+  async function adicionar(
+    nome: string,
+    descricao: string,
+  ) {
+    const novaTransacao =
+      await incluirTransacao({
+        nome,
+        descricao,
+        valor: 0,
+        id_categoria: 1,
+        data: new Date().toLocaleDateString(),
+      });
+
     setEstado((atual) => {
-      if (atual.tipo !== "pronto") {
+      if (atual.tipo !== 'pronto') {
         return atual;
       }
 
       return {
-        tipo: "pronto",
-        transacoes: [...atual.transacoes, novaTransacao],
+        tipo: 'pronto',
+        transacoes: [
+          ...atual.transacoes,
+          novaTransacao,
+        ],
       };
     });
   }
 
   function buscar(id: number) {
-    if (estado.tipo !== "pronto") {
+    if (estado.tipo !== 'pronto') {
       return undefined;
     }
 
-    return estado.transacoes.find((transacao) => transacao.id === id);
+    return estado.transacoes.find(
+      (transacao) =>
+        transacao.id === id,
+    );
   }
 
   return (
@@ -85,10 +124,13 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
 }
 
 export function useTransacoes() {
-  const valor = useContext(TransacoesContexto);
+  const valor =
+    useContext(TransacoesContexto);
 
   if (valor === undefined) {
-    throw new Error("useTransacoes só funciona dentro de TransacoesProvedor");
+    throw new Error(
+      'useTransacoes só funciona dentro de TransacoesProvedor',
+    );
   }
 
   return valor;
