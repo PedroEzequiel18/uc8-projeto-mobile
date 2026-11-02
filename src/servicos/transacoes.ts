@@ -1,0 +1,149 @@
+import type { Transacao } from '../types/Transacao';
+
+export interface DadosNovaTransacao {
+  nome: string;
+  descricao: string;
+  valor: number;
+  id_categoria: number;
+  data: string;
+}
+
+interface TransacaoRemota {
+  id: number;
+  nome: string;
+  descricao: string;
+  valor: number;
+  id_categoria: number;
+  data: string;
+}
+
+function configuracao(): {
+  url: string;
+  chave: string;
+} {
+  const url =
+    process.env.EXPO_PUBLIC_SUPABASE_URL;
+
+  const chave =
+    process.env.EXPO_PUBLIC_SUPABASE_KEY;
+
+  if (
+    url === undefined ||
+    chave === undefined
+  ) {
+    throw new Error(
+      'Defina EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_KEY em .env.local',
+    );
+  }
+
+  return {
+    url,
+    chave,
+  };
+}
+
+function ehTransacaoRemota(
+  valor: unknown,
+): valor is TransacaoRemota {
+  if (
+    typeof valor !== 'object' ||
+    valor === null
+  ) {
+    return false;
+  }
+
+  const campos =
+    valor as Record<string, unknown>;
+
+  return (
+    typeof campos.id === 'number' &&
+    typeof campos.nome === 'string' &&
+    typeof campos.descricao ===
+      'string' &&
+    typeof campos.valor === 'number' &&
+    typeof campos.id_categoria ===
+      'number' &&
+    typeof campos.data === 'string'
+  );
+}
+
+function ehListaDeTransacoes(
+  valor: unknown,
+): valor is TransacaoRemota[] {
+  return (
+    Array.isArray(valor) &&
+    valor.every(ehTransacaoRemota)
+  );
+}
+
+async function requisitar(
+  caminho: string,
+  metodo: 'GET' | 'POST' = 'GET',
+  corpo?: DadosNovaTransacao,
+): Promise<unknown> {
+  const { url, chave } =
+    configuracao();
+
+  const resposta = await fetch(
+    `${url}/rest/v1/${caminho}`,
+    {
+      method: metodo,
+      headers: {
+        apikey: chave,
+        'Content-Type':
+          'application/json',
+        Prefer:
+          'return=representation',
+      },
+      body:
+        corpo === undefined
+          ? undefined
+          : JSON.stringify(corpo),
+    },
+  );
+
+  if (!resposta.ok) {
+    throw new Error(
+      `A API respondeu ${resposta.status}`,
+    );
+  }
+
+  return resposta.json();
+}
+
+export async function carregarTransacoes(): Promise<
+  Transacao[]
+> {
+  const corpo = await requisitar(
+    'transacoes?select=*&order=id',
+  );
+
+  if (!ehListaDeTransacoes(corpo)) {
+    throw new Error(
+      'Resposta inesperada da API',
+    );
+  }
+
+  return corpo;
+}
+
+export async function incluirTransacao(
+  dados: DadosNovaTransacao,
+): Promise<Transacao> {
+  const corpo = await requisitar(
+    'transacoes?select=*',
+    'POST',
+    dados,
+  );
+
+  if (
+    !ehListaDeTransacoes(corpo) ||
+    corpo.length !== 1
+  ) {
+    throw new Error(
+      'Resposta inesperada da API',
+    );
+  }
+
+  return corpo[0];
+}
