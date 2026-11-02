@@ -16,8 +16,11 @@ import { useTransacoes } from '../contexto/TransacoesContexto';
 import { cores, espacos } from '../tema/tema';
 
 export default function TelaTransacoes() {
-  const { estado, adicionar } =
-    useTransacoes();
+  const {
+    estado,
+    adicionar,
+    recarregar,
+  } = useTransacoes();
 
   const { width } =
     useWindowDimensions();
@@ -32,6 +35,28 @@ export default function TelaTransacoes() {
 
         <Text style={styles.carregando}>
           Carregando transações...
+        </Text>
+      </View>
+    );
+  }
+
+  if (estado.tipo === 'erro') {
+    return (
+      <View style={styles.centro}>
+        <Text style={styles.erro}>
+          Não foi possível carregar as
+          transações.
+        </Text>
+
+        <Text style={styles.carregando}>
+          {estado.mensagem}
+        </Text>
+
+        <Text
+          style={styles.recarregar}
+          onPress={recarregar}
+        >
+          Tentar novamente
         </Text>
       </View>
     );
@@ -60,6 +85,23 @@ export default function TelaTransacoes() {
               Gestor de Fluxo de Caixa
             </Text>
 
+            {estado.origem ===
+              'aparelho' && (
+              <Text style={styles.aviso}>
+                Sem conexão: mostrando
+                dados guardados no
+                aparelho ({estado.motivo})
+              </Text>
+            )}
+
+            {estado.pendentes.length >
+              0 && (
+              <Text style={styles.aviso}>
+                A enviar (
+                {estado.pendentes.length})
+              </Text>
+            )}
+
             <FormularioTransacao
               aoCriar={adicionar}
             />
@@ -75,7 +117,8 @@ export default function TelaTransacoes() {
         )}
         ListEmptyComponent={
           <Text style={styles.vazio}>
-            Nenhuma transação cadastrada.
+            Nenhuma transação
+            cadastrada.
           </Text>
         }
       />
@@ -107,11 +150,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: cores.papel,
+    padding: espacos.md,
   },
 
   carregando: {
     marginTop: espacos.sm,
     color: cores.tinta,
+    textAlign: 'center',
+  },
+
+  erro: {
+    color: 'red',
+    fontWeight: 'bold',
+    marginBottom: espacos.sm,
+  },
+
+  recarregar: {
+    marginTop: espacos.md,
+    color: 'blue',
+    fontWeight: 'bold',
+  },
+
+  aviso: {
+    marginBottom: espacos.sm,
+    color: '#d97706',
+    fontWeight: '600',
   },
 
   vazio: {
