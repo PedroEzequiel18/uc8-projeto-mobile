@@ -8,6 +8,15 @@ export interface DadosNovaTransacao {
   data: string;
 }
 
+export class ErroDaApi extends Error {
+  constructor(
+    mensagem: string,
+    public readonly status: number,
+  ) {
+    super(mensagem);
+  }
+}
+
 interface TransacaoRemota {
   id: number;
   nome: string;
@@ -40,6 +49,16 @@ function configuracao(): {
     url,
     chave,
   };
+}
+
+export function descreverErro(
+  erro: unknown,
+): string {
+  if (erro instanceof Error) {
+    return erro.message;
+  }
+
+  return String(erro);
 }
 
 function ehTransacaoRemota(
@@ -103,8 +122,9 @@ async function requisitar(
   );
 
   if (!resposta.ok) {
-    throw new Error(
+    throw new ErroDaApi(
       `A API respondeu ${resposta.status}`,
+      resposta.status,
     );
   }
 

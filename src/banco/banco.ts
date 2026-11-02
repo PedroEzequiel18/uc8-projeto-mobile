@@ -1,6 +1,12 @@
 import * as SQLite from 'expo-sqlite';
 
 import type { Transacao } from '../types/Transacao';
+import type { DadosNovaTransacao } from '../servicos/transacoes';
+
+export interface Pendente
+  extends DadosNovaTransacao {
+  id: number;
+}
 
 interface LinhaTransacao {
   id: number;
@@ -24,6 +30,15 @@ function banco(): Promise<SQLite.SQLiteDatabase> {
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS transacoes (
             id INTEGER PRIMARY KEY NOT NULL,
+            nome TEXT NOT NULL,
+            descricao TEXT NOT NULL,
+            valor REAL NOT NULL,
+            id_categoria INTEGER NOT NULL,
+            data TEXT NOT NULL
+          );
+
+          CREATE TABLE IF NOT EXISTS pendentes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             nome TEXT NOT NULL,
             descricao TEXT NOT NULL,
             valor REAL NOT NULL,
@@ -128,4 +143,67 @@ export async function contarLocal(): Promise<number> {
     );
 
   return linha?.total ?? 0;
+}
+
+export async function listarPendentes(): Promise<
+  Pendente[]
+> {
+  const db = await banco();
+
+  return db.getAllAsync<Pendente>(
+    `
+    SELECT
+      id,
+      nome,
+      descricao,
+      valor,
+      id_categoria,
+      data
+    FROM pendentes
+    ORDER BY id
+    `,
+  );
+}
+
+export async function guardarPendente(
+  dados: DadosNovaTransacao,
+): Promise<Pendente> {
+  const db = await banco();
+
+  const resultado =
+    await db.runAsync(
+      `
+      INSERT INTO pendentes (
+        nome,
+        descricao,
+        valor,
+        id_categoria,
+        data
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        dados.nome,
+        dados.descricao,
+        dados.valor,
+        dados.id_categoria,
+        dados.data,
+      ],
+    );
+
+  return {
+    id: resultado.lastInsertRowId,
+    ...dados,
+  };
+}
+
+export async function removerPendente(
+  id: number,
+): Promise<void> {
+  const db = await banco();
+
+  await db.runAsync(
+    'DELETE FROM pendentes WHERE id = ?',
+    [id],
+  );
 }
