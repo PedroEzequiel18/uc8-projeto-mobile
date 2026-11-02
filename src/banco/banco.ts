@@ -1,7 +1,12 @@
 import * as SQLite from 'expo-sqlite';
 
+import { ErroDoBanco } from '../erros/erros';
+
 import type { Transacao } from '../types/Transacao';
-import type { DadosNovaTransacao } from '../servicos/transacoes';
+
+import type {
+  DadosNovaTransacao,
+} from '../servicos/transacoes';
 
 export interface Pendente
   extends DadosNovaTransacao {
@@ -68,13 +73,107 @@ function paraTransacao(
   };
 }
 
-export async function listarLocal(): Promise<
+async function noBanco<T>(
+  operacao: (
+    db: SQLite.SQLiteDatabase,
+  ) => Promise<T>,
+): Promise<T> {
+  try {
+    const db = await banco();
+
+    return await operacao(db);
+  } catch (erro: unknown) {
+    throw new ErroDoBanco(
+      erro instanceof Error
+        ? erro.message
+        : String(erro),
+    );
+  }
+}
+
+export function listarLocal(): Promise<
   Transacao[]
 > {
-  const db = await banco();
+  return noBanco(async (db) => {
+    const linhas =
+      await db.getAllAsync<LinhaTransacao>(
+        `
+        SELECT
+          id,
+          nome,
+          descricao,
+          valor,
+          id_categoria,
+          data
+        FROM transacoes
+        ORDER BY id
+        `,
+      );
 
-  const linhas =
-    await db.getAllAsync<LinhaTransacao>(
+    return linhas.map(paraTransacao);
+  });
+}
+
+export function guardarLocal(
+  transacoes: Transacao[],
+): Promise<void> {
+  return noBanco(
+    (db) =>
+      db.withTransactionAsync(
+        async () => {
+          await db.runAsync(
+            'DELETE FROM transacoes',
+          );
+
+          for (const transacao of transacoes) {
+            await db.runAsync(
+              `
+              INSERT INTO transacoes (
+                id,
+                nome,
+                descricao,
+                valor,
+                id_categoria,
+                data
+              )
+              VALUES (?, ?, ?, ?, ?, ?)
+              `,
+              [
+                transacao.id,
+                transacao.nome,
+                transacao.descricao,
+                transacao.valor,
+                transacao.id_categoria,
+                transacao.data,
+              ],
+            );
+          }
+        },
+      ),
+  );
+}
+
+export function contarLocal(): Promise<number> {
+  return noBanco(async (db) => {
+    const linha =
+      await db.getFirstAsync<{
+        total: number;
+      }>(
+        `
+        SELECT COUNT(*) AS total
+        FROM transacoes
+        `,
+      );
+
+    return linha?.total ?? 0;
+  });
+}
+
+export function listarPendentes(): Promise<
+  Pendente[]
+> {
+  return noBanco((db) =>
+    db.getAllAsync<Pendente>(
       `
       SELECT
         id,
@@ -83,127 +182,52 @@ export async function listarLocal(): Promise<
         valor,
         id_categoria,
         data
-      FROM transacoes
+      FROM pendentes
       ORDER BY id
       `,
-    );
-
-  return linhas.map(paraTransacao);
-}
-
-export async function guardarLocal(
-  transacoes: Transacao[],
-): Promise<void> {
-  const db = await banco();
-
-  await db.withTransactionAsync(
-    async () => {
-      await db.runAsync(
-        'DELETE FROM transacoes',
-      );
-
-      for (const transacao of transacoes) {
-        await db.runAsync(
-          `
-          INSERT INTO transacoes (
-            id,
-            nome,
-            descricao,
-            valor,
-            id_categoria,
-            data
-          )
-          VALUES (?, ?, ?, ?, ?, ?)
-          `,
-          [
-            transacao.id,
-            transacao.nome,
-            transacao.descricao,
-            transacao.valor,
-            transacao.id_categoria,
-            transacao.data,
-          ],
-        );
-      }
-    },
+    ),
   );
 }
 
-export async function contarLocal(): Promise<number> {
-  const db = await banco();
-
-  const linha =
-    await db.getFirstAsync<{
-      total: number;
-    }>(
-      `
-      SELECT COUNT(*) AS total
-      FROM transacoes
-      `,
-    );
-
-  return linha?.total ?? 0;
-}
-
-export async function listarPendentes(): Promise<
-  Pendente[]
-> {
-  const db = await banco();
-
-  return db.getAllAsync<Pendente>(
-    `
-    SELECT
-      id,
-      nome,
-      descricao,
-      valor,
-      id_categoria,
-      data
-    FROM pendentes
-    ORDER BY id
-    `,
-  );
-}
-
-export async function guardarPendente(
+export function guardarPendente(
   dados: DadosNovaTransacao,
 ): Promise<Pendente> {
-  const db = await banco();
+  return noBanco(async (db) => {
+    const resultado =
+      await db.runAsync(
+        `
+        INSERT INTO pendentes (
+          nome,
+          descricao,
+          valor,
+          id_categoria,
+          data
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          dados.nome,
+          dados.descricao,
+          dados.valor,
+          dados.id_categoria,
+          dados.data,
+        ],
+      );
 
-  const resultado =
-    await db.runAsync(
-      `
-      INSERT INTO pendentes (
-        nome,
-        descricao,
-        valor,
-        id_categoria,
-        data
-      )
-      VALUES (?, ?, ?, ?, ?)
-      `,
-      [
-        dados.nome,
-        dados.descricao,
-        dados.valor,
-        dados.id_categoria,
-        dados.data,
-      ],
-    );
-
-  return {
-    id: resultado.lastInsertRowId,
-    ...dados,
-  };
+    return {
+      id: resultado.lastInsertRowId,
+      ...dados,
+    };
+  });
 }
 
-export async function removerPendente(
+export function removerPendente(
   id: number,
 ): Promise<void> {
-  const db = await banco();
-
-  await db.runAsync(
-    'DELETE FROM pendentes WHERE id = ?',
-    [id],
-  );
+  return noBanco(async (db) => {
+    await db.runAsync(
+      'DELETE FROM pendentes WHERE id = ?',
+      [id],
+    );
+  });
 }
