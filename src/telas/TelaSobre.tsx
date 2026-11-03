@@ -19,6 +19,8 @@ import {
   contarLocal,
 } from '../banco/banco';
 
+import { registrarErro } from '../erros/erros';
+
 import {
   cores,
   espacos,
@@ -32,21 +34,34 @@ export default function TelaSobre() {
   } = useWindowDimensions();
 
   const [guardadas, setGuardadas] =
-    useState<number | undefined>(
-      undefined,
-    );
+    useState('...');
 
   useFocusEffect(
     useCallback(() => {
       let cancelado = false;
 
-      contarLocal().then(
-        (total) => {
+      contarLocal()
+        .then((total) => {
           if (!cancelado) {
-            setGuardadas(total);
+            setGuardadas(
+              String(total),
+            );
           }
-        },
-      );
+        })
+        .catch(
+          (erro: unknown) => {
+            registrarErro(
+              'contagem',
+              erro,
+            );
+
+            if (!cancelado) {
+              setGuardadas(
+                'indisponível',
+              );
+            }
+          },
+        );
 
       return () => {
         cancelado = true;
@@ -90,9 +105,7 @@ export default function TelaSobre() {
 
       <Text style={styles.medida}>
         Guardadas no aparelho:{' '}
-        {guardadas === undefined
-          ? '...'
-          : guardadas}
+        {guardadas}
       </Text>
     </View>
   );
