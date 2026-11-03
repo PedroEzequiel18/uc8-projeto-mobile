@@ -18,10 +18,14 @@ import {
 } from '../banco/banco';
 
 import {
+  ErroDeValidacao,
+  registrarErro,
+} from '../erros/erros';
+
+import {
   carregarTransacoes,
   incluirTransacao,
   ErroDaApi,
-  descreverErro,
   type DadosNovaTransacao,
 } from '../servicos/transacoes';
 
@@ -80,10 +84,24 @@ export function TransacoesProvedor({
     });
 
     sincronizar()
+      .catch((erro: unknown) => {
+        registrarErro(
+          'sincronizar',
+          erro,
+        );
+      })
       .then(() => carregarTransacoes())
       .then(async (transacoes) => {
         const pendentes =
-          await listarPendentes();
+          await listarPendentes().catch(
+            (erro: unknown) => {
+              registrarErro(
+                'pendentes',
+                erro,
+              );
+              return [];
+            },
+          );
 
         if (!cancelado) {
           setEstado({
@@ -97,15 +115,18 @@ export function TransacoesProvedor({
         guardarLocal(
           transacoes,
         ).catch((erro: unknown) => {
-          console.warn(
-            'Não foi possível guardar no aparelho: ' +
-              descreverErro(erro),
+          registrarErro(
+            'guardar no aparelho',
+            erro,
           );
         });
       })
       .catch((erro: unknown) => {
         const motivo =
-          descreverErro(erro);
+          registrarErro(
+            'carga',
+            erro,
+          ).mensagem;
 
         Promise.all([
           listarLocal(),
@@ -145,11 +166,10 @@ export function TransacoesProvedor({
                 setEstado({
                   tipo: 'erro',
                   mensagem:
-                    motivo +
-                    ' / ' +
-                    descreverErro(
+                    registrarErro(
+                      'leitura do aparelho',
                       erroLocal,
-                    ),
+                    ).mensagem,
                 });
               }
             },
@@ -177,11 +197,9 @@ export function TransacoesProvedor({
         if (
           erro instanceof ErroDaApi
         ) {
-          console.warn(
-            'Pendente descartado pela API: ' +
-              descreverErro(
-                erro,
-              ),
+          registrarErro(
+            'pendente descartado',
+            erro,
           );
         } else {
           return;
@@ -198,6 +216,12 @@ export function TransacoesProvedor({
     nome: string,
     descricao: string,
   ): Promise<void> {
+    if (nome.trim() === '') {
+      throw new ErroDeValidacao(
+        'Informe o nome.',
+      );
+    }
+
     const dados: DadosNovaTransacao =
       {
         nome,
