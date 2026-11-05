@@ -4,9 +4,9 @@ import {
   useEffect,
   useState,
   type ReactNode,
-} from 'react';
+} from "react";
 
-import type { Transacao } from '../types/Transacao';
+import type { Transacao } from "../types/Transacao";
 
 import {
   guardarLocal,
@@ -15,34 +15,31 @@ import {
   listarPendentes,
   removerPendente,
   type Pendente,
-} from '../banco/banco';
+} from "../banco/banco";
 
-import {
-  ErroDeValidacao,
-  registrarErro,
-} from '../erros/erros';
+import { ErroDeValidacao, registrarErro } from "../erros/erros";
 
 import {
   carregarTransacoes,
   incluirTransacao,
   ErroDaApi,
   type DadosNovaTransacao,
-} from '../servicos/transacoes';
+} from "../servicos/transacoes";
 
 export type EstadoTransacoes =
-  | { tipo: 'carregando' }
-  | { tipo: 'erro'; mensagem: string }
+  | { tipo: "carregando" }
+  | { tipo: "erro"; mensagem: string }
   | {
-      tipo: 'pronto';
+      tipo: "pronto";
       transacoes: Transacao[];
       pendentes: Pendente[];
-      origem: 'nuvem';
+      origem: "nuvem";
     }
   | {
-      tipo: 'pronto';
+      tipo: "pronto";
       transacoes: Transacao[];
       pendentes: Pendente[];
-      origem: 'aparelho';
+      origem: "aparelho";
       motivo: string;
     };
 
@@ -52,128 +49,88 @@ interface ValorDasTransacoes {
   adicionar: (
     nome: string,
     descricao: string,
+    valor: number,
+    idCategoria: number,
+    data: string,
   ) => Promise<void>;
-  buscar: (
-    id: number,
-  ) => Transacao | undefined;
+  buscar: (id: number) => Transacao | undefined;
 }
 
-const TransacoesContexto =
-  createContext<
-    ValorDasTransacoes | undefined
-  >(undefined);
+const TransacoesContexto = createContext<ValorDasTransacoes | undefined>(
+  undefined,
+);
 
-export function TransacoesProvedor({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const [estado, setEstado] =
-    useState<EstadoTransacoes>({
-      tipo: 'carregando',
-    });
+export function TransacoesProvedor({ children }: { children: ReactNode }) {
+  const [estado, setEstado] = useState<EstadoTransacoes>({
+    tipo: "carregando",
+  });
 
-  const [tentativa, setTentativa] =
-    useState(0);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let cancelado = false;
 
     setEstado({
-      tipo: 'carregando',
+      tipo: "carregando",
     });
 
     sincronizar()
       .catch((erro: unknown) => {
-        registrarErro(
-          'sincronizar',
-          erro,
-        );
+        registrarErro("sincronizar", erro);
       })
       .then(() => carregarTransacoes())
       .then(async (transacoes) => {
-        const pendentes =
-          await listarPendentes().catch(
-            (erro: unknown) => {
-              registrarErro(
-                'pendentes',
-                erro,
-              );
-              return [];
-            },
-          );
+        const pendentes = await listarPendentes().catch((erro: unknown) => {
+          registrarErro("pendentes", erro);
+          return [];
+        });
 
         if (!cancelado) {
           setEstado({
-            tipo: 'pronto',
+            tipo: "pronto",
             transacoes,
             pendentes,
-            origem: 'nuvem',
+            origem: "nuvem",
           });
         }
 
-        guardarLocal(
-          transacoes,
-        ).catch((erro: unknown) => {
-          registrarErro(
-            'guardar no aparelho',
-            erro,
-          );
+        guardarLocal(transacoes).catch((erro: unknown) => {
+          registrarErro("guardar no aparelho", erro);
         });
       })
       .catch((erro: unknown) => {
-        const motivo =
-          registrarErro(
-            'carga',
-            erro,
-          ).mensagem;
+        const motivo = registrarErro("carga", erro).mensagem;
 
-        Promise.all([
-          listarLocal(),
-          listarPendentes(),
-        ])
-          .then(
-            ([guardadas, pendentes]) => {
-              if (cancelado) {
-                return;
-              }
+        Promise.all([listarLocal(), listarPendentes()])
+          .then(([guardadas, pendentes]) => {
+            if (cancelado) {
+              return;
+            }
 
-              if (
-                guardadas.length > 0 ||
-                pendentes.length > 0
-              ) {
-                setEstado({
-                  tipo: 'pronto',
-                  transacoes:
-                    guardadas,
-                  pendentes,
-                  origem: 'aparelho',
-                  motivo,
-                });
-              } else {
-                setEstado({
-                  tipo: 'erro',
-                  mensagem: motivo,
-                });
-              }
-            },
-          )
-          .catch(
-            (
-              erroLocal: unknown,
-            ) => {
-              if (!cancelado) {
-                setEstado({
-                  tipo: 'erro',
-                  mensagem:
-                    registrarErro(
-                      'leitura do aparelho',
-                      erroLocal,
-                    ).mensagem,
-                });
-              }
-            },
-          );
+            if (guardadas.length > 0 || pendentes.length > 0) {
+              setEstado({
+                tipo: "pronto",
+                transacoes: guardadas,
+                pendentes,
+                origem: "aparelho",
+                motivo,
+              });
+            } else {
+              setEstado({
+                tipo: "erro",
+                mensagem: motivo,
+              });
+            }
+          })
+          .catch((erroLocal: unknown) => {
+            if (!cancelado) {
+              setEstado({
+                tipo: "erro",
+                mensagem: registrarErro("leitura do aparelho", erroLocal)
+                  .mensagem,
+              });
+            }
+          });
       });
 
     return () => {
@@ -182,107 +139,76 @@ export function TransacoesProvedor({
   }, [tentativa]);
 
   function recarregar() {
-    setTentativa(
-      (atual) => atual + 1,
-    );
+    setTentativa((atual) => atual + 1);
   }
 
   async function sincronizar(): Promise<void> {
     for (const pendente of await listarPendentes()) {
       try {
-        await incluirTransacao(
-          pendente,
-        );
+        await incluirTransacao(pendente);
       } catch (erro: unknown) {
-        if (
-          erro instanceof ErroDaApi
-        ) {
-          registrarErro(
-            'pendente descartado',
-            erro,
-          );
+        if (erro instanceof ErroDaApi) {
+          registrarErro("pendente descartado", erro);
         } else {
           return;
         }
       }
 
-      await removerPendente(
-        pendente.id,
-      );
+      await removerPendente(pendente.id);
     }
   }
 
   async function adicionar(
     nome: string,
     descricao: string,
+    valor: number,
+    idCategoria: number,
+    data: string,
   ): Promise<void> {
-    if (nome.trim() === '') {
-      throw new ErroDeValidacao(
-        'Informe o nome.',
-      );
+    if (nome.trim() === "") {
+      throw new ErroDeValidacao("Informe o nome.");
     }
 
-    const dados: DadosNovaTransacao =
-      {
-        nome,
-        descricao,
-        valor: 0,
-        id_categoria: 1,
-        data: new Date().toLocaleDateString(),
-      };
+    const dados: DadosNovaTransacao = {
+      nome,
+      descricao,
+      valor,
+      id_categoria: idCategoria,
+      data,
+    };
 
     try {
-      const nova =
-        await incluirTransacao(
-          dados,
-        );
+      const nova = await incluirTransacao(dados);
 
       setEstado((atual) =>
-        atual.tipo === 'pronto'
+        atual.tipo === "pronto"
           ? {
               ...atual,
-              transacoes: [
-                ...atual.transacoes,
-                nova,
-              ],
+              transacoes: [...atual.transacoes, nova],
             }
           : atual,
       );
     } catch (erro: unknown) {
-      if (
-        erro instanceof ErroDaApi
-      ) {
+      if (erro instanceof ErroDaApi) {
         throw erro;
       }
 
-      const pendente =
-        await guardarPendente(
-          dados,
-        );
+      const pendente = await guardarPendente(dados);
 
       setEstado((atual) =>
-        atual.tipo === 'pronto'
+        atual.tipo === "pronto"
           ? {
               ...atual,
-              pendentes: [
-                ...atual.pendentes,
-                pendente,
-              ],
+              pendentes: [...atual.pendentes, pendente],
             }
           : atual,
       );
     }
   }
 
-  function buscar(
-    id: number,
-  ): Transacao | undefined {
-    return estado.tipo ===
-      'pronto'
-      ? estado.transacoes.find(
-          (transacao) =>
-            transacao.id === id,
-        )
+  function buscar(id: number): Transacao | undefined {
+    return estado.tipo === "pronto"
+      ? estado.transacoes.find((transacao) => transacao.id === id)
       : undefined;
   }
 
@@ -301,15 +227,10 @@ export function TransacoesProvedor({
 }
 
 export function useTransacoes() {
-  const valor =
-    useContext(
-      TransacoesContexto,
-    );
+  const valor = useContext(TransacoesContexto);
 
   if (valor === undefined) {
-    throw new Error(
-      'useTransacoes só funciona dentro de TransacoesProvedor',
-    );
+    throw new Error("useTransacoes só funciona dentro de TransacoesProvedor");
   }
 
   return valor;

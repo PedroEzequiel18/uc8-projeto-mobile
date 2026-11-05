@@ -1,14 +1,29 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { Botao } from './Botao';
 import { Campo } from './Campo';
-import { espacos } from '../tema/tema';
+
+import {
+  espacos,
+  cores,
+} from '../tema/tema';
+
+import { categorias } from '../dados/categorias';
 
 interface FormularioTransacaoProps {
   aoCriar: (
     nome: string,
     descricao: string,
+    valor: number,
+    idCategoria: number,
+    data: string,
   ) => void;
 }
 
@@ -16,8 +31,22 @@ export function FormularioTransacao({
   aoCriar,
 }: FormularioTransacaoProps) {
   const [nome, setNome] = useState('');
+
   const [descricao, setDescricao] =
     useState('');
+
+  const [valor, setValor] =
+    useState('');
+
+  const [data, setData] =
+    useState(
+      new Date()
+        .toISOString()
+        .slice(0, 10),
+    );
+
+  const [categoria, setCategoria] =
+    useState('1');
 
   const [tocado, setTocado] =
     useState(false);
@@ -36,10 +65,25 @@ export function FormularioTransacao({
   }
 
   function criar() {
-    aoCriar(nome, descricao);
+    aoCriar(
+      nome,
+      descricao,
+      Number(valor) || 0,
+      Number(categoria),
+      data,
+    );
 
     setNome('');
     setDescricao('');
+    setValor('');
+    setCategoria('1');
+
+    setData(
+      new Date()
+        .toISOString()
+        .slice(0, 10),
+    );
+
     setTocado(false);
   }
 
@@ -58,6 +102,67 @@ export function FormularioTransacao({
         aoMudar={setDescricao}
       />
 
+      <Campo
+        rotulo="Valor"
+        valor={valor}
+        aoMudar={setValor}
+        tipoDeTeclado="numeric"
+      />
+
+      <Campo
+        rotulo="Data"
+        valor={data}
+        aoMudar={setData}
+      />
+
+      <Text style={styles.rotuloCategoria}>
+        Categoria
+      </Text>
+
+      <View style={styles.grupoCategorias}>
+        {categorias.map((item) => {
+          const selecionada =
+            categoria === String(item.id);
+
+          return (
+            <Pressable
+              key={item.id}
+              onPress={() =>
+                setCategoria(
+                  String(item.id),
+                )
+              }
+              style={[
+                styles.chip,
+                selecionada &&
+                  styles.chipSelecionado,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.textoChip,
+                  selecionada &&
+                    styles.textoChipSelecionado,
+                ]}
+              >
+                {item.nome}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Text style={styles.selecionada}>
+        Selecionada:{' '}
+        {
+          categorias.find(
+            (c) =>
+              c.id ===
+              Number(categoria),
+          )?.nome
+        }
+      </Text>
+
       <View style={styles.acoes}>
         <Botao
           titulo="Criar Transação"
@@ -72,6 +177,49 @@ export function FormularioTransacao({
 const styles = StyleSheet.create({
   container: {
     marginBottom: espacos.md,
+  },
+
+  rotuloCategoria: {
+    color: cores.tintaSuave,
+    marginTop: espacos.sm,
+    marginBottom: espacos.sm,
+  },
+
+  grupoCategorias: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: espacos.sm,
+  },
+
+  chip: {
+    borderWidth: 1,
+    borderColor: cores.borda,
+    backgroundColor: cores.papelCartao,
+    borderRadius: 999,
+
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+
+  chipSelecionado: {
+    backgroundColor: cores.receita,
+    borderColor: cores.receita,
+  },
+
+  textoChip: {
+    color: cores.tinta,
+    fontWeight: '600',
+  },
+
+  textoChipSelecionado: {
+    color: cores.papelCartao,
+  },
+
+  selecionada: {
+    color: cores.receita,
+    marginTop: espacos.sm,
+    marginBottom: espacos.md,
+    fontWeight: '600',
   },
 
   acoes: {

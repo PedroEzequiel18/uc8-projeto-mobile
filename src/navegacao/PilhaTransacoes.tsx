@@ -11,7 +11,9 @@ const Stack =
 
 export function PilhaTransacoes() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      initialRouteName="Transacoes"
+    >
       <Stack.Screen
         name="Transacoes"
         component={TelaTransacoes}

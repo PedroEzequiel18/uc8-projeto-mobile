@@ -8,7 +8,12 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useTransacoes } from '../contexto/TransacoesContexto';
 
-import { cores, espacos } from '../tema/tema';
+import {
+  cores,
+  espacos,
+  raio,
+} from '../tema/tema';
+
 import type { RotasDaPilha } from '../navegacao/tipos';
 
 type TelaDetalheTransacaoProps =
@@ -38,25 +43,45 @@ export default function TelaDetalheTransacao({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>
-        {transacao.nome}
-      </Text>
+      <View style={styles.cartao}>
+        <Text style={styles.titulo}>
+          {transacao.nome}
+        </Text>
 
-      <Text style={styles.texto}>
-        {transacao.descricao}
-      </Text>
+        <Text style={styles.descricao}>
+          {transacao.descricao}
+        </Text>
 
-      <Text style={styles.texto}>
-        Valor: R$ {transacao.valor}
-      </Text>
+        <View style={styles.blocoValor}>
+          <Text style={styles.rotulo}>
+            VALOR
+          </Text>
 
-      <Text style={styles.texto}>
-        Data: {transacao.data}
-      </Text>
+          <Text style={styles.valor}>
+            R$ {transacao.valor.toFixed(2)}
+          </Text>
+        </View>
 
-      <Text style={styles.texto}>
-        Categoria: {transacao.id_categoria}
-      </Text>
+        <View style={styles.linha}>
+          <Text style={styles.rotulo}>
+            DATA
+          </Text>
+
+          <Text style={styles.texto}>
+            {transacao.data}
+          </Text>
+        </View>
+
+        <View style={styles.linha}>
+          <Text style={styles.rotulo}>
+            CATEGORIA
+          </Text>
+
+          <Text style={styles.texto}>
+            {transacao.id_categoria}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -68,15 +93,50 @@ const styles = StyleSheet.create({
     padding: espacos.md,
   },
 
+  cartao: {
+    backgroundColor: cores.papelCartao,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: raio,
+    padding: espacos.lg,
+  },
+
   titulo: {
     color: cores.tinta,
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: espacos.md,
+    fontWeight: '700',
+  },
+
+  descricao: {
+    color: cores.tintaSuave,
+    marginTop: espacos.sm,
+    marginBottom: espacos.lg,
+  },
+
+  blocoValor: {
+    marginBottom: espacos.lg,
+  },
+
+  rotulo: {
+    color: cores.tintaSuave,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  valor: {
+    color: cores.receita,
+    fontSize: 32,
+    fontWeight: '700',
+    marginTop: espacos.sm,
+  },
+
+  linha: {
+    marginTop: espacos.md,
   },
 
   texto: {
-    color: cores.tintaSuave,
-    marginBottom: espacos.sm,
+    color: cores.tinta,
+    fontSize: 16,
+    marginTop: espacos.xs,
   },
 });

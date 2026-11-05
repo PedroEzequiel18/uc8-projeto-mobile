@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
 
-import { Botao } from './Botao';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import type { RotasDaPilha } from '../navegacao/tipos';
 import type { Transacao } from '../types/Transacao';
@@ -17,111 +17,181 @@ import {
   raio,
 } from '../tema/tema';
 
+import { categorias } from '../dados/categorias';
+
 interface CartaoTransacaoProps {
   transacao: Transacao;
-  destaque?: boolean;
+}
+
+function formatarData(data: string) {
+  if (data.includes('/')) {
+    return data;
+  }
+
+  const [ano, mes, dia] =
+    data.slice(0, 10).split('-');
+
+  if (!ano || !mes || !dia) {
+    return data;
+  }
+
+  return `${dia}/${mes}/${ano}`;
 }
 
 export function CartaoTransacao({
   transacao,
-  destaque = false,
 }: CartaoTransacaoProps) {
   const navigation =
     useNavigation<
       NativeStackNavigationProp<RotasDaPilha>
     >();
 
+  const categoria =
+    categorias.find(
+      (c) =>
+        c.id ===
+        transacao.id_categoria,
+    );
+
   return (
-    <View style={estilos.cartao}>
-      <Text style={estilos.titulo}>
-        {transacao.nome}
-      </Text>
+    <Pressable
+      onPress={() =>
+        navigation.navigate(
+          'DetalheTransacao',
+          {
+            id: transacao.id,
+          },
+        )
+      }
+      style={({ pressed }) => [
+        estilos.cartao,
+        pressed &&
+          estilos.pressionado,
+      ]}
+    >
+      <View style={estilos.linhaTopo}>
+        <View style={estilos.textos}>
+          <Text
+            style={estilos.titulo}
+            numberOfLines={1}
+          >
+            {transacao.nome}
+          </Text>
 
-      <Text style={estilos.descricao}>
-        {transacao.descricao}
-      </Text>
+          {!!transacao.descricao && (
+            <Text
+              style={
+                estilos.descricao
+              }
+              numberOfLines={2}
+            >
+              {transacao.descricao}
+            </Text>
+          )}
+        </View>
 
-      <Text style={estilos.valor}>
-        Valor: R$ {transacao.valor}
-      </Text>
-
-      <Text style={estilos.data}>
-        Data: {transacao.data}
-      </Text>
-
-      <View style={estilos.acoes}>
-        <Botao
-          titulo="Detalhes"
-          onPress={() =>
-            navigation.navigate(
-              'DetalheTransacao',
-              {
-                id: transacao.id,
-              },
-            )
-          }
-        />
+        <Text style={estilos.valor}>
+          R${' '}
+          {transacao.valor.toFixed(
+            2,
+          )}
+        </Text>
       </View>
 
-      {destaque && (
-        <Text style={estilos.destaque}>
-          Destaque
+      <View style={estilos.linhaRodape}>
+        <Text style={estilos.etiqueta}>
+          {categoria?.nome ??
+            `Categoria ${transacao.id_categoria}`}
         </Text>
-      )}
-    </View>
+
+        <Text style={estilos.data}>
+          {formatarData(
+            transacao.data,
+          )}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
 const estilos = StyleSheet.create({
   cartao: {
-    backgroundColor: cores.papelCartao,
+    backgroundColor:
+      cores.papelCartao,
+
     borderColor: cores.borda,
     borderWidth: 1,
     borderRadius: raio,
+
     padding: espacos.md,
+
     marginBottom: espacos.sm,
 
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    elevation: 1,
+  },
 
-    elevation: 2,
+  pressionado: {
+    opacity: 0.7,
+  },
+
+  linhaTopo: {
+    flexDirection: 'row',
+    justifyContent:
+      'space-between',
+
+    alignItems: 'flex-start',
+
+    gap: espacos.sm,
+  },
+
+  textos: {
+    flex: 1,
   },
 
   titulo: {
     color: cores.tinta,
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
   },
 
   descricao: {
     color: cores.tintaSuave,
-    marginTop: espacos.sm,
+    marginTop: espacos.xs,
   },
 
   valor: {
-    color: cores.tinta,
-    marginTop: espacos.sm,
-    fontWeight: '600',
+    color: cores.receita,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  linhaRodape: {
+    flexDirection: 'row',
+    justifyContent:
+      'space-between',
+
+    alignItems: 'center',
+
+    marginTop: espacos.md,
+  },
+
+  etiqueta: {
+    color: cores.tintaSuave,
+    fontSize: 12,
+
+    backgroundColor:
+      cores.papel,
+
+    paddingHorizontal:
+      espacos.sm,
+
+    paddingVertical: 2,
+
+    borderRadius: 8,
   },
 
   data: {
     color: cores.tintaSuave,
-    marginTop: espacos.xs,
-  },
-
-  acoes: {
-    flexDirection: 'row',
-    marginTop: espacos.md,
-  },
-
-  destaque: {
-    color: cores.dourado,
-    fontWeight: 'bold',
-    marginTop: espacos.sm,
+    fontSize: 12,
   },
 });

@@ -1,26 +1,41 @@
 import { StatusBar } from 'expo-status-bar';
+
 import {
   FlatList,
   StyleSheet,
   Text,
   ActivityIndicator,
   View,
+  Pressable,
   useWindowDimensions,
 } from 'react-native';
 
+import { useNavigation } from '@react-navigation/native';
+
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import type { RotasDaPilha } from '../navegacao/tipos';
+
 import { CartaoTransacao } from '../components/CartaoTransacao';
-import { FormularioTransacao } from '../components/FormularioTransacao';
 
 import { useTransacoes } from '../contexto/TransacoesContexto';
 
-import { cores, espacos } from '../tema/tema';
+import {
+  cores,
+  espacos,
+  raio,
+} from '../tema/tema';
 
 export default function TelaTransacoes() {
   const {
     estado,
-    adicionar,
     recarregar,
   } = useTransacoes();
+
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RotasDaPilha>
+    >();
 
   const { width } =
     useWindowDimensions();
@@ -44,8 +59,7 @@ export default function TelaTransacoes() {
     return (
       <View style={styles.centro}>
         <Text style={styles.erro}>
-          Não foi possível carregar as
-          transações.
+          Não foi possível carregar as transações.
         </Text>
 
         <Text style={styles.carregando}>
@@ -65,8 +79,14 @@ export default function TelaTransacoes() {
   return (
     <>
       <FlatList
-        key={duasColunas ? 'duas' : 'uma'}
-        numColumns={duasColunas ? 2 : 1}
+        key={
+          duasColunas
+            ? 'duas'
+            : 'uma'
+        }
+        numColumns={
+          duasColunas ? 2 : 1
+        }
         columnWrapperStyle={
           duasColunas
             ? styles.linhaDeColunas
@@ -81,44 +101,55 @@ export default function TelaTransacoes() {
         }
         ListHeaderComponent={
           <>
-            <Text style={styles.titulo}>
-              Gestor de Fluxo de Caixa
+            
+            <Text style={styles.subtitulo}>
+              Cadastro manual ou por comprovante PIX.
             </Text>
+
+            <Pressable
+              style={styles.botaoNova}
+              onPress={() =>
+                navigation.navigate(
+                  'NovaTransacao',
+                )
+              }
+            >
+              <Text style={styles.textoBotao}>
+                ➕ Nova Transação
+              </Text>
+            </Pressable>
 
             {estado.origem ===
               'aparelho' && (
               <Text style={styles.aviso}>
-                Sem conexão: mostrando
-                dados guardados no
-                aparelho ({estado.motivo})
+                Sem conexão:
+                mostrando dados do aparelho.
               </Text>
             )}
 
-            {estado.pendentes.length >
-              0 && (
+            {estado.pendentes
+              .length > 0 && (
               <Text style={styles.aviso}>
-                A enviar (
-                {estado.pendentes.length})
+                Pendentes:
+                {' '}
+                {
+                  estado.pendentes
+                    .length
+                }
               </Text>
             )}
-
-            <FormularioTransacao
-              aoCriar={adicionar}
-            />
           </>
         }
         renderItem={({ item }) => (
           <View style={styles.celula}>
             <CartaoTransacao
               transacao={item}
-              destaque={item.id === 1}
             />
           </View>
         )}
         ListEmptyComponent={
           <Text style={styles.vazio}>
-            Nenhuma transação
-            cadastrada.
+            Nenhuma transação cadastrada.
           </Text>
         }
       />
@@ -131,50 +162,64 @@ export default function TelaTransacoes() {
 const styles = StyleSheet.create({
   container: {
     padding: espacos.md,
-    gap: espacos.md,
-    backgroundColor: cores.papel,
+    backgroundColor:
+      cores.papel,
     flexGrow: 1,
   },
 
   titulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: espacos.lg,
-    marginBottom: espacos.md,
     color: cores.tinta,
+    fontSize: 26,
+    fontWeight: '700',
+    marginBottom: espacos.sm,
+  },
+
+  subtitulo: {
+    color: cores.tintaSuave,
+    marginBottom: espacos.lg,
+  },
+
+  botaoNova: {
+    backgroundColor:
+      cores.receita,
+
+    borderRadius: raio,
+
+    padding: espacos.md,
+
+    marginBottom:
+      espacos.lg,
+  },
+
+  textoBotao: {
+    textAlign: 'center',
+    fontWeight: '700',
+    color: cores.papelCartao,
+  },
+
+  aviso: {
+    marginBottom: espacos.sm,
+    color: '#d97706',
   },
 
   centro: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: cores.papel,
-    padding: espacos.md,
   },
 
   carregando: {
     marginTop: espacos.sm,
-    color: cores.tinta,
-    textAlign: 'center',
   },
 
   erro: {
     color: 'red',
-    fontWeight: 'bold',
-    marginBottom: espacos.sm,
+    fontWeight: '700',
   },
 
   recarregar: {
     marginTop: espacos.md,
     color: 'blue',
-    fontWeight: 'bold',
-  },
-
-  aviso: {
-    marginBottom: espacos.sm,
-    color: '#d97706',
-    fontWeight: '600',
   },
 
   vazio: {

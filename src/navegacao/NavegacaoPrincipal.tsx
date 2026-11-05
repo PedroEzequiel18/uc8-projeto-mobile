@@ -1,23 +1,30 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import TelaTransacoes from '../telas/TelaTransacoes';
-import TelaDetalheTransacao from '../telas/TelaDetalheTransacao';
-import TelaNovaTransacao from '../telas/TelaNovaTransacao';
+import TelaDashboard from "../telas/TelaDashboard";
+import TelaTransacoes from "../telas/TelaTransacoes";
+import TelaDetalheTransacao from "../telas/TelaDetalheTransacao";
+import TelaNovaTransacao from "../telas/TelaNovaTransacao";
 
-import type { RotasDaPilha } from './tipos';
+import type { RotasDaPilha } from "./tipos";
 
 const Stack = createNativeStackNavigator<RotasDaPilha>();
 
 export default function NavegacaoPrincipal() {
   return (
-    <Stack.Navigator
-      initialRouteName="Transacoes"
-    >
+    <Stack.Navigator initialRouteName="Dashboard">
+      <Stack.Screen
+        name="Dashboard"
+        component={TelaDashboard}
+        options={{
+          title: "Gestor de Fluxo de Caixa",
+        }}
+      />
+
       <Stack.Screen
         name="Transacoes"
         component={TelaTransacoes}
         options={{
-          title: 'Transações',
+          title: "Transações",
         }}
       />
 
@@ -25,7 +32,7 @@ export default function NavegacaoPrincipal() {
         name="DetalheTransacao"
         component={TelaDetalheTransacao}
         options={{
-          title: 'Detalhes',
+          title: "Detalhes",
         }}
       />
 
@@ -33,7 +40,7 @@ export default function NavegacaoPrincipal() {
         name="NovaTransacao"
         component={TelaNovaTransacao}
         options={{
-          title: 'Nova Transação',
+          title: "Nova Transação",
         }}
       />
     </Stack.Navigator>
