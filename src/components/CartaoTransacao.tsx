@@ -53,6 +53,10 @@ export function CartaoTransacao({
         transacao.id_categoria,
     );
 
+  const ehDespesa =
+    categoria?.tipo === 'fixa' ||
+    categoria?.tipo === 'variavel';
+
   return (
     <Pressable
       onPress={() =>
@@ -90,9 +94,15 @@ export function CartaoTransacao({
           )}
         </View>
 
-        <Text style={estilos.valor}>
-          R${' '}
-          {transacao.valor.toFixed(
+        <Text
+          style={[
+            estilos.valor,
+            ehDespesa
+              ? estilos.valorDespesa
+              : estilos.valorReceita,
+          ]}
+        >
+          R$ {transacao.valor.toFixed(
             2,
           )}
         </Text>
@@ -160,9 +170,16 @@ const estilos = StyleSheet.create({
   },
 
   valor: {
-    color: cores.receita,
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  valorReceita: {
+    color: cores.receita,
+  },
+
+  valorDespesa: {
+    color: cores.despesa,
   },
 
   linhaRodape: {

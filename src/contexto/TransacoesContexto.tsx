@@ -22,10 +22,10 @@ import { ErroDeValidacao, registrarErro } from "../erros/erros";
 import {
   carregarTransacoes,
   incluirTransacao,
+  removerTransacao,
   ErroDaApi,
   type DadosNovaTransacao,
 } from "../servicos/transacoes";
-
 export type EstadoTransacoes =
   | { tipo: "carregando" }
   | { tipo: "erro"; mensagem: string }
@@ -45,7 +45,9 @@ export type EstadoTransacoes =
 
 interface ValorDasTransacoes {
   estado: EstadoTransacoes;
+
   recarregar: () => void;
+
   adicionar: (
     nome: string,
     descricao: string,
@@ -53,7 +55,14 @@ interface ValorDasTransacoes {
     idCategoria: number,
     data: string,
   ) => Promise<void>;
-  buscar: (id: number) => Transacao | undefined;
+
+  remover: (
+    id: number,
+  ) => Promise<void>;
+
+  buscar: (
+    id: number,
+  ) => Transacao | undefined;
 }
 
 const TransacoesContexto = createContext<ValorDasTransacoes | undefined>(
@@ -205,12 +214,30 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
       );
     }
   }
+  async function remover(
+  id: number,
+): Promise<void> {
+  await removerTransacao(id);
 
-  function buscar(id: number): Transacao | undefined {
-    return estado.tipo === "pronto"
-      ? estado.transacoes.find((transacao) => transacao.id === id)
-      : undefined;
-  }
+  setEstado((atual) =>
+    atual.tipo === "pronto"
+      ? {
+          ...atual,
+          transacoes: atual.transacoes.filter(
+            (t) => t.id !== id,
+          ),
+        }
+      : atual,
+  );
+}
+
+function buscar(id: number): Transacao | undefined {
+  return estado.tipo === "pronto"
+    ? estado.transacoes.find(
+        (transacao) => transacao.id === id,
+      )
+    : undefined;
+}
 
   return (
     <TransacoesContexto.Provider
@@ -218,6 +245,7 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
         estado,
         recarregar,
         adicionar,
+        remover,
         buscar,
       }}
     >
@@ -230,7 +258,9 @@ export function useTransacoes() {
   const valor = useContext(TransacoesContexto);
 
   if (valor === undefined) {
-    throw new Error("useTransacoes só funciona dentro de TransacoesProvedor");
+    throw new Error(
+      "useTransacoes só funciona dentro de TransacoesProvedor",
+    );
   }
 
   return valor;

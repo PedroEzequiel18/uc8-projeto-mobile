@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 import {
   Pressable,
@@ -7,176 +7,92 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { categorias } from '../dados/categorias';
+import { categorias } from "../dados/categorias";
 
-import {
-  cores,
-  espacos,
-  raio,
-} from '../tema/tema';
+import { cores, espacos, raio } from "../tema/tema";
 
 export default function TelaFiltros() {
-  const [tipo, setTipo] =
-    useState('Todos');
+  const [tipo, setTipo] = useState("Todos");
 
-  const [categoria, setCategoria] =
-    useState('Todas');
+  const [categoria, setCategoria] = useState("Todas");
 
-  const [dataInicial, setDataInicial] =
-    useState('');
+  const [dataInicial, setDataInicial] = useState("");
 
-  const [dataFinal, setDataFinal] =
-    useState('');
+  const [dataFinal, setDataFinal] = useState("");
 
   return (
-    <ScrollView
-      contentContainerStyle={
-        styles.container
-      }
-    >
-      <Text style={styles.titulo}>
-        Filtros
-      </Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.titulo}>Filtros</Text>
 
-      <Text style={styles.rotulo}>
-        Tipo
-      </Text>
+      <Text style={styles.rotulo}>Tipo</Text>
 
       <View style={styles.grupo}>
         <Chip
           texto="Todos"
-          ativo={
-            tipo === 'Todos'
-          }
-          aoPressionar={() =>
-            setTipo('Todos')
-          }
+          ativo={tipo === "Todos"}
+          aoPressionar={() => setTipo("Todos")}
         />
 
         <Chip
           texto="Receitas"
-          ativo={
-            tipo ===
-            'Receitas'
-          }
-          aoPressionar={() =>
-            setTipo(
-              'Receitas',
-            )
-          }
+          ativo={tipo === "Receitas"}
+          aoPressionar={() => setTipo("Receitas")}
         />
 
         <Chip
           texto="Despesas"
-          ativo={
-            tipo ===
-            'Despesas'
-          }
-          aoPressionar={() =>
-            setTipo(
-              'Despesas',
-            )
-          }
+          ativo={tipo === "Despesas"}
+          aoPressionar={() => setTipo("Despesas")}
         />
       </View>
-
-      <Text style={styles.rotulo}>
-        Categoria
-      </Text>
+      <Text style={styles.rotulo}>Categoria selecionada</Text>
 
       <View style={styles.caixa}>
-        <Text style={styles.valor}>
-          {categoria}
-        </Text>
+        <Text style={styles.valor}>{categoria}</Text>
       </View>
 
-      <Text
-        style={
-          styles.listaCategorias
-        }
-      >
-        Categorias disponíveis:
-      </Text>
+      <Text style={styles.listaCategorias}>Selecionar categoria:</Text>
 
-      {categorias.map(
-        (item) => (
-          <Pressable
-            key={item.id}
-            onPress={() =>
-              setCategoria(
-                item.nome,
-              )
-            }
-          >
-            <Text
-              style={
-                styles.categoria
-              }
-            >
-              • {item.nome}
-            </Text>
-          </Pressable>
-        ),
-      )}
+      {categorias.map((item) => (
+        <Pressable key={item.id} onPress={() => setCategoria(item.nome)}>
+          <Text style={styles.categoria}>• {item.nome}</Text>
+        </Pressable>
+      ))}
 
-      <Text style={styles.rotulo}>
-        Data Inicial
-      </Text>
+      <Text style={styles.rotulo}>Data Inicial</Text>
 
       <TextInput
         style={styles.input}
         value={dataInicial}
-        onChangeText={
-          setDataInicial
-        }
+        onChangeText={setDataInicial}
         placeholder="dd/mm/aaaa"
       />
 
-      <Text style={styles.rotulo}>
-        Data Final
-      </Text>
+      <Text style={styles.rotulo}>Data Final</Text>
 
       <TextInput
         style={styles.input}
         value={dataFinal}
-        onChangeText={
-          setDataFinal
-        }
+        onChangeText={setDataFinal}
         placeholder="dd/mm/aaaa"
       />
 
-      <Pressable
-        style={styles.botaoFiltrar}
-      >
-        <Text
-          style={
-            styles.textoBotao
-          }
-        >
-          Filtrar
-        </Text>
+      <Pressable style={styles.botaoFiltrar}>
+        <Text style={styles.textoBotao}>Filtrar</Text>
       </Pressable>
 
       <Pressable
         style={styles.botaoLimpar}
         onPress={() => {
-          setTipo('Todos');
-          setCategoria(
-            'Todas',
-          );
-          setDataInicial('');
-          setDataFinal('');
+          setTipo("Todos");
+          setCategoria("Todas");
+          setDataInicial("");
+          setDataFinal("");
         }}
       >
-        <Text
-          style={
-            styles.textoBotaoLimpar
-          }
-        >
-          Limpar
-        </Text>
+        <Text style={styles.textoBotaoLimpar}>Limpar</Text>
       </Pressable>
     </ScrollView>
   );
@@ -194,19 +110,9 @@ function Chip({
   return (
     <Pressable
       onPress={aoPressionar}
-      style={[
-        styles.chip,
-        ativo &&
-          styles.chipAtivo,
-      ]}
+      style={[styles.chip, ativo && styles.chipAtivo]}
     >
-      <Text
-        style={[
-          styles.textoChip,
-          ativo &&
-            styles.textoChipAtivo,
-        ]}
-      >
+      <Text style={[styles.textoChip, ativo && styles.textoChipAtivo]}>
         {texto}
       </Text>
     </Pressable>
@@ -215,41 +121,36 @@ function Chip({
 
 const styles = StyleSheet.create({
   container: {
-  padding: espacos.md,
-  paddingTop: 50,
-  backgroundColor: cores.papel,
-},
+    padding: espacos.md,
+    paddingTop: 50,
+    backgroundColor: cores.papel,
+  },
 
   titulo: {
     color: cores.tinta,
     fontSize: 26,
-    fontWeight: '700',
-    marginBottom:
-      espacos.lg,
+    fontWeight: "700",
+    marginBottom: espacos.lg,
   },
 
   rotulo: {
     color: cores.tinta,
-    fontWeight: '700',
-    marginBottom:
-      espacos.sm,
-    marginTop:
-      espacos.md,
+    fontWeight: "700",
+    marginBottom: espacos.sm,
+    marginTop: espacos.md,
   },
 
   grupo: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: espacos.sm,
   },
 
   chip: {
     borderWidth: 1,
-    borderColor:
-      cores.borda,
+    borderColor: cores.borda,
 
-    backgroundColor:
-      cores.papelCartao,
+    backgroundColor: cores.papelCartao,
 
     borderRadius: 999,
 
@@ -259,30 +160,25 @@ const styles = StyleSheet.create({
   },
 
   chipAtivo: {
-    backgroundColor:
-      cores.receita,
-    borderColor:
-      cores.receita,
+    backgroundColor: cores.receita,
+    borderColor: cores.receita,
   },
 
   textoChip: {
     color: cores.tinta,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   textoChipAtivo: {
-    color:
-      cores.papelCartao,
+    color: cores.papelCartao,
   },
 
   caixa: {
-    backgroundColor:
-      cores.papelCartao,
+    backgroundColor: cores.papelCartao,
 
     borderWidth: 1,
 
-    borderColor:
-      cores.borda,
+    borderColor: cores.borda,
 
     borderRadius: raio,
 
@@ -295,26 +191,22 @@ const styles = StyleSheet.create({
 
   listaCategorias: {
     marginTop: espacos.md,
-    marginBottom:
-      espacos.sm,
+    marginBottom: espacos.sm,
     color: cores.tinta,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   categoria: {
-    color:
-      cores.tintaSuave,
+    color: cores.tintaSuave,
     marginBottom: 6,
   },
 
   input: {
-    backgroundColor:
-      cores.papelCartao,
+    backgroundColor: cores.papelCartao,
 
     borderWidth: 1,
 
-    borderColor:
-      cores.borda,
+    borderColor: cores.borda,
 
     borderRadius: raio,
 
@@ -322,40 +214,35 @@ const styles = StyleSheet.create({
   },
 
   botaoFiltrar: {
-    backgroundColor:
-      cores.receita,
+    backgroundColor: cores.receita,
 
     borderRadius: raio,
 
     padding: espacos.md,
 
-    marginTop:
-      espacos.lg,
+    marginTop: espacos.lg,
   },
 
   textoBotao: {
-    textAlign: 'center',
-    color:
-      cores.papelCartao,
-    fontWeight: '700',
+    textAlign: "center",
+    color: cores.papelCartao,
+    fontWeight: "700",
   },
 
   botaoLimpar: {
     borderWidth: 1,
-    borderColor:
-      cores.borda,
+    borderColor: cores.borda,
 
     borderRadius: raio,
 
     padding: espacos.md,
 
-    marginTop:
-      espacos.sm,
+    marginTop: espacos.sm,
   },
 
   textoBotaoLimpar: {
-    textAlign: 'center',
+    textAlign: "center",
     color: cores.tinta,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

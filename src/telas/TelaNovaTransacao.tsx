@@ -1,67 +1,46 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import {
-  View,
-  StyleSheet,
-  Text,
-  Pressable,
-} from 'react-native';
+import { View, StyleSheet, Text, Pressable } from "react-native";
 
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 
-import * as DocumentPicker from 'expo-document-picker';
+import * as DocumentPicker from "expo-document-picker";
 
-import { FormularioTransacao } from '../components/FormularioTransacao';
+import { FormularioTransacao } from "../components/FormularioTransacao";
 
-import { useTransacoes } from '../contexto/TransacoesContexto';
+import { useTransacoes } from "../contexto/TransacoesContexto";
 
-import { registrarErro } from '../erros/erros';
+import { registrarErro } from "../erros/erros";
 
-import {
-  cores,
-  espacos,
-  raio,
-} from '../tema/tema';
-
+import { cores, espacos, raio } from "../tema/tema";
 export default function TelaNovaTransacao() {
-  const { adicionar } =
-    useTransacoes();
+  const { adicionar } = useTransacoes();
 
-  const [erro, setErro] =
-    useState<string | undefined>();
+  const [erro, setErro] = useState<string | undefined>();
 
-  const [arquivoSelecionado,
-    setArquivoSelecionado] =
-    useState<string | undefined>();
+  const [arquivoSelecionado, setArquivoSelecionado] = useState<
+    string | undefined
+  >();
 
   async function escolherImagem() {
-    const resultado =
-      await ImagePicker.launchImageLibraryAsync({
-        mediaTypes:
-          ImagePicker.MediaTypeOptions.Images,
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
 
-        quality: 1,
-      });
+      quality: 1,
+    });
 
     if (!resultado.canceled) {
-      setArquivoSelecionado(
-        resultado.assets[0].uri,
-      );
+      setArquivoSelecionado(resultado.assets[0].uri);
     }
   }
 
   async function escolherPdf() {
-    const resultado =
-      await DocumentPicker.getDocumentAsync({
-        type: 'application/pdf',
-      });
+    const resultado = await DocumentPicker.getDocumentAsync({
+      type: "application/pdf",
+    });
 
-    if (
-      resultado.canceled === false
-    ) {
-      setArquivoSelecionado(
-        resultado.assets[0].name,
-      );
+    if (resultado.canceled === false) {
+      setArquivoSelecionado(resultado.assets[0].name);
     }
   }
 
@@ -74,77 +53,36 @@ export default function TelaNovaTransacao() {
   ) {
     setErro(undefined);
 
-    adicionar(
-      nome,
-      descricao,
-      valor,
-      idCategoria,
-      data,
-    )
+    adicionar(nome, descricao, valor, idCategoria, data)
       .then(() => {})
-      .catch(
-        (falha: unknown) => {
-          setErro(
-            registrarErro(
-              'cadastro',
-              falha,
-            ).mensagem,
-          );
-        },
-      );
+      .catch((falha: unknown) => {
+        setErro(registrarErro("cadastro", falha).mensagem);
+      });
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>
-        Comprovante PIX
-      </Text>
+      <Text style={styles.titulo}>Comprovante PIX</Text>
 
-      <Pressable
-        style={styles.botaoImportar}
-        onPress={
-          escolherImagem
-        }
-      >
-        <Text style={styles.textoBotao}>
-          📷 Importar Imagem
-        </Text>
+      <Pressable style={styles.botaoImportar} onPress={escolherImagem}>
+        <Text style={styles.textoBotao}>📷 Importar Imagem</Text>
       </Pressable>
 
-      <Pressable
-        style={styles.botaoImportar}
-        onPress={escolherPdf}
-      >
-        <Text style={styles.textoBotao}>
-          📄 Importar PDF
-        </Text>
+      <Pressable style={styles.botaoImportar} onPress={escolherPdf}>
+        <Text style={styles.textoBotao}>📄 Importar PDF</Text>
       </Pressable>
 
       {arquivoSelecionado && (
         <View style={styles.caixaArquivo}>
-          <Text
-            style={styles.nomeArquivo}
-          >
-            Arquivo selecionado:
-          </Text>
+          <Text style={styles.nomeArquivo}>Arquivo selecionado:</Text>
 
-          <Text
-            style={styles.caminho}
-          >
-            {arquivoSelecionado}
-          </Text>
+          <Text style={styles.caminho}>{arquivoSelecionado}</Text>
         </View>
       )}
 
-      <FormularioTransacao
-        aoCriar={criar}
-      />
+      <FormularioTransacao aoCriar={criar} />
 
-      {erro && (
-        <Text style={styles.erro}>
-          {erro}
-        </Text>
-      )}
+      {erro && <Text style={styles.erro}>{erro}</Text>}
     </View>
   );
 }
@@ -153,55 +91,48 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: espacos.md,
-    backgroundColor:
-      cores.papel,
+    backgroundColor: cores.papel,
   },
 
   titulo: {
     color: cores.tinta,
     fontSize: 22,
-    fontWeight: '700',
-    marginBottom:
-      espacos.md,
+    fontWeight: "700",
+    marginBottom: espacos.md,
   },
 
   botaoImportar: {
-    backgroundColor:
-      cores.papelCartao,
+    backgroundColor: cores.papelCartao,
 
     borderWidth: 1,
-    borderColor:
-      cores.borda,
+    borderColor: cores.borda,
 
     borderRadius: raio,
 
     padding: espacos.md,
 
-    marginBottom:
-      espacos.sm,
+    marginBottom: espacos.sm,
   },
 
   textoBotao: {
-    textAlign: 'center',
+    textAlign: "center",
     color: cores.tinta,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   caixaArquivo: {
-    backgroundColor:
-      cores.papelCartao,
+    backgroundColor: cores.papelCartao,
 
     borderRadius: raio,
 
     padding: espacos.md,
 
-    marginBottom:
-      espacos.md,
+    marginBottom: espacos.md,
   },
 
   nomeArquivo: {
     color: cores.tinta,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 4,
   },
 
@@ -211,8 +142,8 @@ const styles = StyleSheet.create({
   },
 
   erro: {
-    color: '#dc2626',
+    color: "#dc2626",
     marginTop: espacos.sm,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

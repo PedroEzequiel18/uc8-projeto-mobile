@@ -77,11 +77,9 @@ function ehTransacaoRemota(
   return (
     typeof campos.id === 'number' &&
     typeof campos.nome === 'string' &&
-    typeof campos.descricao ===
-      'string' &&
+    typeof campos.descricao === 'string' &&
     typeof campos.valor === 'number' &&
-    typeof campos.id_categoria ===
-      'number' &&
+    typeof campos.id_categoria === 'number' &&
     typeof campos.data === 'string'
   );
 }
@@ -97,7 +95,11 @@ function ehListaDeTransacoes(
 
 async function requisitar(
   caminho: string,
-  metodo: 'GET' | 'POST' = 'GET',
+  metodo:
+    | 'GET'
+    | 'POST'
+    | 'DELETE'
+    | 'PATCH' = 'GET',
   corpo?: DadosNovaTransacao,
 ): Promise<unknown> {
   const { url, chave } =
@@ -128,7 +130,13 @@ async function requisitar(
     );
   }
 
-  return resposta.json();
+  const texto = await resposta.text();
+
+  if (texto === '') {
+    return null;
+  }
+
+  return JSON.parse(texto);
 }
 
 export async function carregarTransacoes(): Promise<
@@ -166,4 +174,13 @@ export async function incluirTransacao(
   }
 
   return corpo[0];
+}
+
+export async function removerTransacao(
+  id: number,
+): Promise<void> {
+  await requisitar(
+    `transacoes?id=eq.${id}`,
+    'DELETE',
+  );
 }
