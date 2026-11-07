@@ -4,9 +4,9 @@ import {
   useEffect,
   useState,
   type ReactNode,
-} from "react";
+} from 'react';
 
-import type { Transacao } from "../types/Transacao";
+import type { Transacao } from '../types/Transacao';
 
 import {
   guardarLocal,
@@ -15,31 +15,58 @@ import {
   listarPendentes,
   removerPendente,
   type Pendente,
-} from "../banco/banco";
+} from '../banco/banco';
 
-import { ErroDeValidacao, registrarErro } from "../erros/erros";
+import { ErroDeValidacao, registrarErro } from '../erros/erros';
+
+import { categorias } from '../dados/categorias';
 
 import {
   carregarTransacoes,
   incluirTransacao,
+  atualizarTransacao,
   removerTransacao,
   ErroDaApi,
   type DadosNovaTransacao,
-} from "../servicos/transacoes";
+} from '../servicos/transacoes';
+// Segunda barreira: o formulário já valida, mas o provedor não confia nele.
+function validarTransacao(
+  nome: string,
+  valor: number,
+  idCategoria: number,
+  data: string,
+): void {
+  if (nome.trim() === '') {
+    throw new ErroDeValidacao('Informe o nome.');
+  }
+
+  if (!Number.isFinite(valor) || valor <= 0) {
+    throw new ErroDeValidacao('O valor precisa ser um número maior que zero.');
+  }
+
+  if (!categorias.some((categoria) => categoria.id === idCategoria)) {
+    throw new ErroDeValidacao('Escolha uma categoria válida.');
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data.slice(0, 10))) {
+    throw new ErroDeValidacao('Informe uma data válida.');
+  }
+}
+
 export type EstadoTransacoes =
-  | { tipo: "carregando" }
-  | { tipo: "erro"; mensagem: string }
+  | { tipo: 'carregando' }
+  | { tipo: 'erro'; mensagem: string }
   | {
-      tipo: "pronto";
+      tipo: 'pronto';
       transacoes: Transacao[];
       pendentes: Pendente[];
-      origem: "nuvem";
+      origem: 'nuvem';
     }
   | {
-      tipo: "pronto";
+      tipo: 'pronto';
       transacoes: Transacao[];
       pendentes: Pendente[];
-      origem: "aparelho";
+      origem: 'aparelho';
       motivo: string;
     };
 
@@ -56,13 +83,18 @@ interface ValorDasTransacoes {
     data: string,
   ) => Promise<void>;
 
-  remover: (
+  editar: (
     id: number,
+    nome: string,
+    descricao: string,
+    valor: number,
+    idCategoria: number,
+    data: string,
   ) => Promise<void>;
 
-  buscar: (
-    id: number,
-  ) => Transacao | undefined;
+  remover: (id: number) => Promise<void>;
+
+  buscar: (id: number) => Transacao | undefined;
 }
 
 const TransacoesContexto = createContext<ValorDasTransacoes | undefined>(
@@ -71,7 +103,7 @@ const TransacoesContexto = createContext<ValorDasTransacoes | undefined>(
 
 export function TransacoesProvedor({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<EstadoTransacoes>({
-    tipo: "carregando",
+    tipo: 'carregando',
   });
 
   const [tentativa, setTentativa] = useState(0);
@@ -80,35 +112,35 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
     let cancelado = false;
 
     setEstado({
-      tipo: "carregando",
+      tipo: 'carregando',
     });
 
     sincronizar()
       .catch((erro: unknown) => {
-        registrarErro("sincronizar", erro);
+        registrarErro('sincronizar', erro);
       })
       .then(() => carregarTransacoes())
       .then(async (transacoes) => {
         const pendentes = await listarPendentes().catch((erro: unknown) => {
-          registrarErro("pendentes", erro);
+          registrarErro('pendentes', erro);
           return [];
         });
 
         if (!cancelado) {
           setEstado({
-            tipo: "pronto",
+            tipo: 'pronto',
             transacoes,
             pendentes,
-            origem: "nuvem",
+            origem: 'nuvem',
           });
         }
 
         guardarLocal(transacoes).catch((erro: unknown) => {
-          registrarErro("guardar no aparelho", erro);
+          registrarErro('guardar no aparelho', erro);
         });
       })
       .catch((erro: unknown) => {
-        const motivo = registrarErro("carga", erro).mensagem;
+        const motivo = registrarErro('carga', erro).mensagem;
 
         Promise.all([listarLocal(), listarPendentes()])
           .then(([guardadas, pendentes]) => {
@@ -118,15 +150,15 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
 
             if (guardadas.length > 0 || pendentes.length > 0) {
               setEstado({
-                tipo: "pronto",
+                tipo: 'pronto',
                 transacoes: guardadas,
                 pendentes,
-                origem: "aparelho",
+                origem: 'aparelho',
                 motivo,
               });
             } else {
               setEstado({
-                tipo: "erro",
+                tipo: 'erro',
                 mensagem: motivo,
               });
             }
@@ -134,8 +166,8 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
           .catch((erroLocal: unknown) => {
             if (!cancelado) {
               setEstado({
-                tipo: "erro",
-                mensagem: registrarErro("leitura do aparelho", erroLocal)
+                tipo: 'erro',
+                mensagem: registrarErro('leitura do aparelho', erroLocal)
                   .mensagem,
               });
             }
@@ -157,7 +189,7 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
         await incluirTransacao(pendente);
       } catch (erro: unknown) {
         if (erro instanceof ErroDaApi) {
-          registrarErro("pendente descartado", erro);
+          registrarErro('pendente descartado', erro);
         } else {
           return;
         }
@@ -174,9 +206,7 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
     idCategoria: number,
     data: string,
   ): Promise<void> {
-    if (nome.trim() === "") {
-      throw new ErroDeValidacao("Informe o nome.");
-    }
+    validarTransacao(nome, valor, idCategoria, data);
 
     const dados: DadosNovaTransacao = {
       nome,
@@ -190,7 +220,7 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
       const nova = await incluirTransacao(dados);
 
       setEstado((atual) =>
-        atual.tipo === "pronto"
+        atual.tipo === 'pronto'
           ? {
               ...atual,
               transacoes: [...atual.transacoes, nova],
@@ -205,7 +235,7 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
       const pendente = await guardarPendente(dados);
 
       setEstado((atual) =>
-        atual.tipo === "pronto"
+        atual.tipo === 'pronto'
           ? {
               ...atual,
               pendentes: [...atual.pendentes, pendente],
@@ -214,30 +244,54 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
       );
     }
   }
-  async function remover(
-  id: number,
-): Promise<void> {
-  await removerTransacao(id);
+  async function editar(
+    id: number,
+    nome: string,
+    descricao: string,
+    valor: number,
+    idCategoria: number,
+    data: string,
+  ): Promise<void> {
+    validarTransacao(nome, valor, idCategoria, data);
 
-  setEstado((atual) =>
-    atual.tipo === "pronto"
-      ? {
-          ...atual,
-          transacoes: atual.transacoes.filter(
-            (t) => t.id !== id,
-          ),
-        }
-      : atual,
-  );
-}
+    const atualizada = await atualizarTransacao(id, {
+      nome,
+      descricao,
+      valor,
+      id_categoria: idCategoria,
+      data,
+    });
 
-function buscar(id: number): Transacao | undefined {
-  return estado.tipo === "pronto"
-    ? estado.transacoes.find(
-        (transacao) => transacao.id === id,
-      )
-    : undefined;
-}
+    setEstado((atual) =>
+      atual.tipo === 'pronto'
+        ? {
+            ...atual,
+            transacoes: atual.transacoes.map((t) =>
+              t.id === id ? atualizada : t,
+            ),
+          }
+        : atual,
+    );
+  }
+
+  async function remover(id: number): Promise<void> {
+    await removerTransacao(id);
+
+    setEstado((atual) =>
+      atual.tipo === 'pronto'
+        ? {
+            ...atual,
+            transacoes: atual.transacoes.filter((t) => t.id !== id),
+          }
+        : atual,
+    );
+  }
+
+  function buscar(id: number): Transacao | undefined {
+    return estado.tipo === 'pronto'
+      ? estado.transacoes.find((transacao) => transacao.id === id)
+      : undefined;
+  }
 
   return (
     <TransacoesContexto.Provider
@@ -245,6 +299,7 @@ function buscar(id: number): Transacao | undefined {
         estado,
         recarregar,
         adicionar,
+        editar,
         remover,
         buscar,
       }}
@@ -258,9 +313,7 @@ export function useTransacoes() {
   const valor = useContext(TransacoesContexto);
 
   if (valor === undefined) {
-    throw new Error(
-      "useTransacoes só funciona dentro de TransacoesProvedor",
-    );
+    throw new Error('useTransacoes só funciona dentro de TransacoesProvedor');
   }
 
   return valor;
