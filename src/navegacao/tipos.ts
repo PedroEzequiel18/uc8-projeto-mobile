@@ -10,16 +10,18 @@ export type RotasDaPilha = {
   };
 
   NovaTransacao: undefined;
+
+  EditarTransacao: {
+    id: number;
+  };
 };
 
 export type RotasDasAbas = {
-  AbaInicio:
-    NavigatorScreenParams<RotasDaPilha>;
+  AbaInicio: NavigatorScreenParams<RotasDaPilha>;
 
   AbaCategorias: undefined;
 
-  AbaTransacoes:
-    NavigatorScreenParams<RotasDaPilha>;
+  AbaTransacoes: NavigatorScreenParams<RotasDaPilha>;
 
   AbaFiltros: undefined;
 
