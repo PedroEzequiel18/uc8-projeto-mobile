@@ -1,17 +1,8 @@
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import type { KeyboardTypeOptions } from 'react-native';
 
-import {
-  cores,
-  espacos,
-  raio,
-} from '../tema/tema';
+import { cores, espacos, raio } from '../tema/tema';
 
 interface CampoProps {
   rotulo: string;
@@ -30,26 +21,16 @@ export function Campo({
 }: CampoProps) {
   return (
     <View style={estilos.grupo}>
-      <Text style={estilos.rotulo}>
-        {rotulo}
-      </Text>
+      <Text style={estilos.rotulo}>{rotulo}</Text>
 
       <TextInput
-        style={[
-          estilos.entrada,
-          erro !== undefined &&
-            estilos.entradaComErro,
-        ]}
+        style={[estilos.entrada, erro !== undefined && estilos.entradaComErro]}
         value={valor}
         onChangeText={aoMudar}
         keyboardType={tipoDeTeclado}
       />
 
-      {erro !== undefined && (
-        <Text style={estilos.erro}>
-          {erro}
-        </Text>
-      )}
+      {erro !== undefined && <Text style={estilos.erro}>{erro}</Text>}
     </View>
   );
 }

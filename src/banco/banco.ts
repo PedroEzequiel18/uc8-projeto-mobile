@@ -4,12 +4,9 @@ import { ErroDoBanco } from '../erros/erros';
 
 import type { Transacao } from '../types/Transacao';
 
-import type {
-  DadosNovaTransacao,
-} from '../servicos/transacoes';
+import type { DadosNovaTransacao } from '../servicos/transacoes';
 
-export interface Pendente
-  extends DadosNovaTransacao {
+export interface Pendente extends DadosNovaTransacao {
   id: number;
 }
 
@@ -22,17 +19,12 @@ interface LinhaTransacao {
   data: string;
 }
 
-let bancoAberto:
-  | Promise<SQLite.SQLiteDatabase>
-  | undefined;
+let bancoAberto: Promise<SQLite.SQLiteDatabase> | undefined;
 
 function banco(): Promise<SQLite.SQLiteDatabase> {
   if (bancoAberto === undefined) {
-    bancoAberto =
-      SQLite.openDatabaseAsync(
-        'transacoes.db',
-      ).then(async (db) => {
-        await db.execAsync(`
+    bancoAberto = SQLite.openDatabaseAsync('transacoes.db').then(async (db) => {
+      await db.execAsync(`
           CREATE TABLE IF NOT EXISTS transacoes (
             id INTEGER PRIMARY KEY NOT NULL,
             nome TEXT NOT NULL,
@@ -52,52 +44,40 @@ function banco(): Promise<SQLite.SQLiteDatabase> {
           );
         `);
 
-        return db;
-      });
+      return db;
+    });
   }
 
   return bancoAberto;
 }
 
-function paraTransacao(
-  linha: LinhaTransacao,
-): Transacao {
+function paraTransacao(linha: LinhaTransacao): Transacao {
   return {
     id: linha.id,
     nome: linha.nome,
     descricao: linha.descricao,
     valor: linha.valor,
-    id_categoria:
-      linha.id_categoria,
+    id_categoria: linha.id_categoria,
     data: linha.data,
   };
 }
 
 async function noBanco<T>(
-  operacao: (
-    db: SQLite.SQLiteDatabase,
-  ) => Promise<T>,
+  operacao: (db: SQLite.SQLiteDatabase) => Promise<T>,
 ): Promise<T> {
   try {
     const db = await banco();
 
     return await operacao(db);
   } catch (erro: unknown) {
-    throw new ErroDoBanco(
-      erro instanceof Error
-        ? erro.message
-        : String(erro),
-    );
+    throw new ErroDoBanco(erro instanceof Error ? erro.message : String(erro));
   }
 }
 
-export function listarLocal(): Promise<
-  Transacao[]
-> {
+export function listarLocal(): Promise<Transacao[]> {
   return noBanco(async (db) => {
-    const linhas =
-      await db.getAllAsync<LinhaTransacao>(
-        `
+    const linhas = await db.getAllAsync<LinhaTransacao>(
+      `
         SELECT
           id,
           nome,
@@ -108,26 +88,20 @@ export function listarLocal(): Promise<
         FROM transacoes
         ORDER BY id
         `,
-      );
+    );
 
     return linhas.map(paraTransacao);
   });
 }
 
-export function guardarLocal(
-  transacoes: Transacao[],
-): Promise<void> {
-  return noBanco(
-    (db) =>
-      db.withTransactionAsync(
-        async () => {
-          await db.runAsync(
-            'DELETE FROM transacoes',
-          );
+export function guardarLocal(transacoes: Transacao[]): Promise<void> {
+  return noBanco((db) =>
+    db.withTransactionAsync(async () => {
+      await db.runAsync('DELETE FROM transacoes');
 
-          for (const transacao of transacoes) {
-            await db.runAsync(
-              `
+      for (const transacao of transacoes) {
+        await db.runAsync(
+          `
               INSERT INTO transacoes (
                 id,
                 nome,
@@ -138,40 +112,36 @@ export function guardarLocal(
               )
               VALUES (?, ?, ?, ?, ?, ?)
               `,
-              [
-                transacao.id,
-                transacao.nome,
-                transacao.descricao,
-                transacao.valor,
-                transacao.id_categoria,
-                transacao.data,
-              ],
-            );
-          }
-        },
-      ),
+          [
+            transacao.id,
+            transacao.nome,
+            transacao.descricao,
+            transacao.valor,
+            transacao.id_categoria,
+            transacao.data,
+          ],
+        );
+      }
+    }),
   );
 }
 
 export function contarLocal(): Promise<number> {
   return noBanco(async (db) => {
-    const linha =
-      await db.getFirstAsync<{
-        total: number;
-      }>(
-        `
+    const linha = await db.getFirstAsync<{
+      total: number;
+    }>(
+      `
         SELECT COUNT(*) AS total
         FROM transacoes
         `,
-      );
+    );
 
     return linha?.total ?? 0;
   });
 }
 
-export function listarPendentes(): Promise<
-  Pendente[]
-> {
+export function listarPendentes(): Promise<Pendente[]> {
   return noBanco((db) =>
     db.getAllAsync<Pendente>(
       `
@@ -189,13 +159,10 @@ export function listarPendentes(): Promise<
   );
 }
 
-export function guardarPendente(
-  dados: DadosNovaTransacao,
-): Promise<Pendente> {
+export function guardarPendente(dados: DadosNovaTransacao): Promise<Pendente> {
   return noBanco(async (db) => {
-    const resultado =
-      await db.runAsync(
-        `
+    const resultado = await db.runAsync(
+      `
         INSERT INTO pendentes (
           nome,
           descricao,
@@ -205,14 +172,14 @@ export function guardarPendente(
         )
         VALUES (?, ?, ?, ?, ?)
         `,
-        [
-          dados.nome,
-          dados.descricao,
-          dados.valor,
-          dados.id_categoria,
-          dados.data,
-        ],
-      );
+      [
+        dados.nome,
+        dados.descricao,
+        dados.valor,
+        dados.id_categoria,
+        dados.data,
+      ],
+    );
 
     return {
       id: resultado.lastInsertRowId,
@@ -221,13 +188,8 @@ export function guardarPendente(
   });
 }
 
-export function removerPendente(
-  id: number,
-): Promise<void> {
+export function removerPendente(id: number): Promise<void> {
   return noBanco(async (db) => {
-    await db.runAsync(
-      'DELETE FROM pendentes WHERE id = ?',
-      [id],
-    );
+    await db.runAsync('DELETE FROM pendentes WHERE id = ?', [id]);
   });
 }

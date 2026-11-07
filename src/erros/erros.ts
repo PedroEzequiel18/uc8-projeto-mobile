@@ -1,11 +1,7 @@
 import { ErroDaApi } from '../servicos/transacoes';
 
 export type TipoDeErro =
-  | 'rede'
-  | 'api'
-  | 'banco'
-  | 'validacao'
-  | 'desconhecido';
+  'rede' | 'api' | 'banco' | 'validacao' | 'desconhecido';
 
 export interface ErroClassificado {
   tipo: TipoDeErro;
@@ -27,9 +23,7 @@ export class ErroDoBanco extends Error {
   }
 }
 
-export function classificarErro(
-  erro: unknown,
-): ErroClassificado {
+export function classificarErro(erro: unknown): ErroClassificado {
   if (erro instanceof ErroDeValidacao) {
     return {
       tipo: 'validacao',
@@ -49,21 +43,15 @@ export function classificarErro(
   if (erro instanceof ErroDoBanco) {
     return {
       tipo: 'banco',
-      mensagem:
-        'Não foi possível ler ou guardar os dados no aparelho.',
+      mensagem: 'Não foi possível ler ou guardar os dados no aparelho.',
       detalhe: `${erro.name}: ${erro.message}`,
     };
   }
 
-  if (
-    erro instanceof TypeError &&
-    erro.message ===
-      'Network request failed'
-  ) {
+  if (erro instanceof TypeError && erro.message === 'Network request failed') {
     return {
       tipo: 'rede',
-      mensagem:
-        'Sem conexão com o servidor. Verifique a rede e tente de novo.',
+      mensagem: 'Sem conexão com o servidor. Verifique a rede e tente de novo.',
       detalhe: `${erro.name}: ${erro.message}`,
     };
   }
@@ -71,30 +59,22 @@ export function classificarErro(
   if (erro instanceof Error) {
     return {
       tipo: 'desconhecido',
-      mensagem:
-        'Algo deu errado. Tente de novo.',
+      mensagem: 'Algo deu errado. Tente de novo.',
       detalhe: `${erro.name}: ${erro.message}`,
     };
   }
 
   return {
     tipo: 'desconhecido',
-    mensagem:
-      'Algo deu errado. Tente de novo.',
+    mensagem: 'Algo deu errado. Tente de novo.',
     detalhe: String(erro),
   };
 }
 
-export function registrarErro(
-  origem: string,
-  erro: unknown,
-): ErroClassificado {
-  const classificado =
-    classificarErro(erro);
+export function registrarErro(origem: string, erro: unknown): ErroClassificado {
+  const classificado = classificarErro(erro);
 
-  console.error(
-    `[${origem}] ${classificado.tipo}: ${classificado.detalhe}`,
-  );
+  console.error(`[${origem}] ${classificado.tipo}: ${classificado.detalhe}`);
 
   return classificado;
 }

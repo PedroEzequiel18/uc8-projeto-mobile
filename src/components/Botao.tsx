@@ -1,14 +1,6 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-} from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
-import {
-  cores,
-  espacos,
-  raio,
-} from '../tema/tema';
+import { cores, espacos, raio } from '../tema/tema';
 
 interface BotaoProps {
   titulo: string;
@@ -23,8 +15,7 @@ export function Botao({
   variante = 'primario',
   desabilitado = false,
 }: BotaoProps) {
-  const secundario =
-    variante === 'secundario';
+  const secundario = variante === 'secundario';
 
   return (
     <Pressable
@@ -33,21 +24,12 @@ export function Botao({
       onPress={onPress}
       style={({ pressed }) => [
         estilos.base,
-        secundario &&
-          estilos.secundario,
-        pressed &&
-          estilos.pressionado,
-        desabilitado &&
-          estilos.desabilitado,
+        secundario && estilos.secundario,
+        pressed && estilos.pressionado,
+        desabilitado && estilos.desabilitado,
       ]}
     >
-      <Text
-        style={[
-          estilos.texto,
-          secundario &&
-            estilos.textoSecundario,
-        ]}
-      >
+      <Text style={[estilos.texto, secundario && estilos.textoSecundario]}>
         {titulo}
       </Text>
     </Pressable>
@@ -64,8 +46,7 @@ const estilos = StyleSheet.create({
   },
 
   secundario: {
-    backgroundColor:
-      cores.papelCartao,
+    backgroundColor: cores.papelCartao,
     borderWidth: 1,
     borderColor: cores.tinta,
   },

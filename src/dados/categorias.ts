@@ -1,10 +1,7 @@
 export interface Categoria {
   id: number;
   nome: string;
-  tipo:
-    | 'receita'
-    | 'fixa'
-    | 'variavel';
+  tipo: 'receita' | 'fixa' | 'variavel';
 }
 
 export const categorias: Categoria[] = [
