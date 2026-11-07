@@ -1,154 +1,81 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-} from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { CabecalhoFinanceiro } from '../components/CabecalhoFinanceiro';
+
+import { GraficoDespesas } from '../components/GraficoDespesas';
 
 import { useTransacoes } from '../contexto/TransacoesContexto';
-import { categorias } from '../dados/categorias';
 
 import {
-  cores,
-  espacos,
-  raio,
-} from '../tema/tema';
+  calcularTotais,
+  doMesAtual,
+  formatarMoeda,
+  nomeDoMesAtual,
+} from '../utils/financeiro';
+
+import { cores, espacos, raio } from '../tema/tema';
 
 export default function TelaDashboard() {
-  const { estado } =
-    useTransacoes();
+  const { estado, recarregar } = useTransacoes();
 
-  const transacoes =
-    estado.tipo === 'pronto'
-      ? estado.transacoes
-      : [];
+  const transacoes = estado.tipo === 'pronto' ? estado.transacoes : [];
 
-  const receitas =
-    transacoes
-      .filter((transacao) => {
-        const categoria =
-          categorias.find(
-            (c) =>
-              c.id ===
-              transacao.id_categoria,
-          );
+  const totais = calcularTotais(transacoes);
 
-        return (
-          categoria?.tipo ===
-          'receita'
-        );
-      })
-      .reduce(
-        (soma, transacao) =>
-          soma + transacao.valor,
-        0,
-      );
-
-  const despesas =
-    transacoes
-      .filter((transacao) => {
-        const categoria =
-          categorias.find(
-            (c) =>
-              c.id ===
-              transacao.id_categoria,
-          );
-
-        return (
-          categoria?.tipo === 'fixa' ||
-categoria?.tipo === 'variavel'
-        );
-      })
-      .reduce(
-        (soma, transacao) =>
-          soma + transacao.valor,
-        0,
-      );
-
-  const saldo =
-    receitas - despesas;
-
-  const movimentado =
-    receitas + despesas;
+  const totaisDoMes = calcularTotais(doMesAtual(transacoes));
 
   return (
-    <ScrollView
-      contentContainerStyle={
-        styles.container
-      }
-    >
-      <Text style={styles.titulo}>
-        Gestor de Fluxo de Caixa
-      </Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <CabecalhoFinanceiro
+        totais={totais}
+        aoRecalcular={recarregar}
+        recalculando={estado.tipo === 'carregando'}
+        observacao={
+          estado.tipo === 'pronto' && estado.origem === 'aparelho'
+            ? 'Sem conexão: mostrando dados do aparelho.'
+            : estado.tipo === 'erro'
+              ? 'Não foi possível carregar. Toque em Recalcular.'
+              : undefined
+        }
+      />
 
-      <View style={styles.cartaoSaldo}>
-        <Text style={styles.rotulo}>
-          SALDO APURADO
-        </Text>
-
-        <Text style={styles.valorSaldo}>
-          R$ {saldo.toFixed(2)}
-        </Text>
-      </View>
-
-      <View style={styles.resumo}>
-        <View style={styles.cardReceita}>
-          <Text style={styles.rotulo}>
-            RECEITAS
-          </Text>
-
-          <Text
-            style={styles.valorReceita}
-          >
-            R$ {receitas.toFixed(2)}
-          </Text>
-        </View>
-
-        <View style={styles.cardDespesa}>
-          <Text style={styles.rotulo}>
-            DESPESAS
-          </Text>
-
-          <Text
-            style={styles.valorDespesa}
-          >
-            R$ {despesas.toFixed(2)}
-          </Text>
-        </View>
-      </View>
+      <GraficoDespesas transacoes={transacoes} />
 
       <View style={styles.cartaoResumo}>
-        <Text
-          style={styles.tituloResumo}
-        >
-          Resumo Mensal
-        </Text>
+        <Text style={styles.tituloResumo}>Resumo Mensal</Text>
 
-        <Text style={styles.item}>
-          Receitas do mês:
-          {' '}
-          R$ {receitas.toFixed(2)}
-        </Text>
+        <Text style={styles.mes}>{nomeDoMesAtual()}</Text>
 
-        <Text style={styles.item}>
-          Despesas do mês:
-          {' '}
-          R$ {despesas.toFixed(2)}
-        </Text>
+        <Linha
+          rotulo="Receitas do mês"
+          valor={formatarMoeda(totaisDoMes.receitas)}
+        />
 
-        <Text style={styles.item}>
-          Total movimentado:
-          {' '}
-          R$ {movimentado.toFixed(2)}
-        </Text>
+        <Linha
+          rotulo="Despesas do mês"
+          valor={formatarMoeda(totaisDoMes.despesas)}
+        />
 
-        <Text style={styles.item}>
-          Transações registradas:
-          {' '}
-          {transacoes.length}
-        </Text>
+        <Linha
+          rotulo="Total movimentado"
+          valor={formatarMoeda(totaisDoMes.movimentado)}
+        />
+
+        <Linha
+          rotulo="Transações registradas"
+          valor={String(totaisDoMes.quantidade)}
+        />
       </View>
     </ScrollView>
+  );
+}
+
+function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <View style={styles.linha}>
+      <Text style={styles.item}>{rotulo}</Text>
+      <Text style={styles.itemValor}>{valor}</Text>
+    </View>
   );
 }
 
@@ -156,114 +83,46 @@ const styles = StyleSheet.create({
   container: {
     padding: espacos.md,
     paddingTop: 50,
-    backgroundColor:
-      cores.papel,
+    backgroundColor: cores.papel,
     flexGrow: 1,
   },
 
-  titulo: {
-    color: cores.tinta,
-    fontSize: 22,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: espacos.lg,
-  },
-
-  cartaoSaldo: {
-    backgroundColor:
-      cores.papelCartao,
-
-    borderWidth: 1,
-    borderColor:
-      cores.borda,
-
-    borderRadius: raio,
-
-    padding: espacos.lg,
-
-    marginBottom:
-      espacos.md,
-
-    alignItems: 'center',
-  },
-
-  rotulo: {
-    color: cores.tintaSuave,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  valorSaldo: {
-    color: cores.tinta,
-    fontSize: 28,
-    fontWeight: '700',
-    marginTop: espacos.sm,
-  },
-
-  resumo: {
-    flexDirection: 'row',
-    gap: espacos.sm,
-    marginBottom: espacos.md,
-  },
-
-  cardReceita: {
-    flex: 1,
-    backgroundColor:
-      cores.receitaFundo,
-
-    borderRadius: raio,
-
-    padding: espacos.md,
-  },
-
-  cardDespesa: {
-    flex: 1,
-    backgroundColor:
-      cores.despesaFundo,
-
-    borderRadius: raio,
-
-    padding: espacos.md,
-  },
-
-  valorReceita: {
-    color: cores.receita,
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: espacos.sm,
-  },
-
-  valorDespesa: {
-    color: cores.despesa,
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: espacos.sm,
-  },
-
   cartaoResumo: {
-    backgroundColor:
-      cores.papelCartao,
-
+    backgroundColor: cores.papelCartao,
     borderWidth: 1,
-
-    borderColor:
-      cores.borda,
-
+    borderColor: cores.borda,
     borderRadius: raio,
-
     padding: espacos.lg,
   },
 
   tituloResumo: {
     color: cores.tinta,
+    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
     fontSize: 18,
     fontWeight: '700',
+  },
+
+  mes: {
+    color: cores.tintaSuave,
     marginBottom: espacos.md,
+  },
+
+  linha: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: cores.borda,
+    paddingVertical: espacos.sm,
   },
 
   item: {
     color: cores.tinta,
-    fontSize: 16,
-    marginBottom: espacos.sm,
+    fontSize: 15,
+  },
+
+  itemValor: {
+    color: cores.tinta,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

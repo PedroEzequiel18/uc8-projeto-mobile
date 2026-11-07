@@ -1,4 +1,4 @@
-import { StatusBar } from "expo-status-bar";
+import { StatusBar } from 'expo-status-bar';
 
 import {
   FlatList,
@@ -8,23 +8,30 @@ import {
   View,
   Pressable,
   useWindowDimensions,
-} from "react-native";
+} from 'react-native';
 
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from '@react-navigation/native';
 
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import type { RotasDaPilha } from "../navegacao/tipos";
+import type { RotasDaPilha } from '../navegacao/tipos';
 
-import { CartaoTransacao } from "../components/CartaoTransacao";
+import { CartaoTransacao } from '../components/CartaoTransacao';
 
-import { useTransacoes } from "../contexto/TransacoesContexto";
+import { useTransacoes } from '../contexto/TransacoesContexto';
 
-import { cores, espacos, raio } from "../tema/tema";
+import { cores, espacos, raio } from '../tema/tema';
 
-import { categorias } from "../dados/categorias";
+import { useFiltros } from '../contexto/FiltrosContexto';
+
+import { categorias } from '../dados/categorias';
+
+import { CabecalhoTela } from '../components/CabecalhoTela';
+
 export default function TelaTransacoes() {
   const { estado, recarregar } = useTransacoes();
+
+  const { filtros, atualizar } = useFiltros();
 
   const navigation = useNavigation<NativeStackNavigationProp<RotasDaPilha>>();
 
@@ -32,26 +39,55 @@ export default function TelaTransacoes() {
 
   const duasColunas = width >= 600;
 
-  const transacoes = estado.tipo === "pronto" ? estado.transacoes : [];
+  const transacoesBase = estado.tipo === 'pronto' ? estado.transacoes : [];
 
-  const receitas = transacoes
-    .filter((transacao) => {
-      const categoria = categorias.find((c) => c.id === transacao.id_categoria);
+  const transacoes = transacoesBase.filter((transacao) => {
+    const categoria = categorias.find((c) => c.id === transacao.id_categoria);
 
-      return categoria?.tipo === "receita";
-    })
-    .reduce((soma, transacao) => soma + transacao.valor, 0);
+    if (filtros.tipo === 'Receitas' && categoria?.tipo !== 'receita') {
+      return false;
+    }
 
-  const despesas = transacoes
-    .filter((transacao) => {
-      const categoria = categorias.find((c) => c.id === transacao.id_categoria);
+    if (filtros.tipo === 'Despesas' && categoria?.tipo === 'receita') {
+      return false;
+    }
 
-      return categoria?.tipo === "fixa" || categoria?.tipo === "variavel";
-    })
-    .reduce((soma, transacao) => soma + transacao.valor, 0);
+    if (
+      filtros.categoria !== 'Todas' &&
+      categoria?.nome !== filtros.categoria
+    ) {
+      return false;
+    }
 
-  const saldo = receitas - despesas;
-  if (estado.tipo === "carregando") {
+    // Compara só "aaaa-mm-dd" (ignora hora, se houver).
+    const dia = transacao.data.slice(0, 10);
+
+    if (filtros.dataInicial && dia < filtros.dataInicial) {
+      return false;
+    }
+
+    if (filtros.dataFinal && dia > filtros.dataFinal) {
+      return false;
+    }
+
+    return true;
+  });
+  const filtroAtivo =
+    filtros.tipo !== 'Todos' ||
+    filtros.categoria !== 'Todas' ||
+    filtros.dataInicial !== '' ||
+    filtros.dataFinal !== '';
+
+  function limparFiltros() {
+    atualizar({
+      tipo: 'Todos',
+      categoria: 'Todas',
+      dataInicial: '',
+      dataFinal: '',
+    });
+  }
+
+  if (estado.tipo === 'carregando') {
     return (
       <View style={styles.centro}>
         <ActivityIndicator size="large" />
@@ -61,7 +97,7 @@ export default function TelaTransacoes() {
     );
   }
 
-  if (estado.tipo === "erro") {
+  if (estado.tipo === 'erro') {
     return (
       <View style={styles.centro}>
         <Text style={styles.erro}>
@@ -80,46 +116,54 @@ export default function TelaTransacoes() {
   return (
     <>
       <FlatList
-        key={duasColunas ? "duas" : "uma"}
+        key={duasColunas ? 'duas' : 'uma'}
         numColumns={duasColunas ? 2 : 1}
         columnWrapperStyle={duasColunas ? styles.linhaDeColunas : undefined}
         contentContainerStyle={styles.container}
-        data={estado.transacoes}
+        data={transacoes}
         keyExtractor={(item) => String(item.id)}
         ListHeaderComponent={
           <>
-        
-            <View style={styles.resumo}>
-              <View style={styles.cardResumo}>
-                <Text style={styles.rotuloResumo}>Receitas</Text>
+            <CabecalhoTela
+              sobretitulo="MOVIMENTAÇÕES"
+              titulo="Transações"
+              explicacao="Toque numa transação para ver os detalhes, editar ou excluir."
+            />
 
-                <Text style={styles.receitaResumo}>
-                  R$ {receitas.toFixed(2)}
-                </Text>
-              </View>
-
-              <View style={styles.cardResumo}>
-                <Text style={styles.rotuloResumo}>Despesas</Text>
-
-                <Text style={styles.despesaResumo}>
-                  R$ {despesas.toFixed(2)}
-                </Text>
-              </View>
-
-              <View style={styles.cardResumo}>
-                <Text style={styles.rotuloResumo}>Saldo</Text>
-
-                <Text style={styles.saldoResumo}>R$ {saldo.toFixed(2)}</Text>
-              </View>
-            </View>
             <Pressable
-              style={styles.botaoNova}
-              onPress={() => navigation.navigate("NovaTransacao")}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.botaoNova,
+                pressed && styles.pressionado,
+              ]}
+              onPress={() => navigation.navigate('NovaTransacao')}
             >
               <Text style={styles.textoBotao}>➕ Nova Transação</Text>
             </Pressable>
 
-            {estado.origem === "aparelho" && (
+            {filtroAtivo ? (
+              <View style={styles.faixaFiltro}>
+                <Text style={styles.textoFiltro}>
+                  Filtro ativo: {transacoes.length} de {transacoesBase.length}{' '}
+                  transações
+                </Text>
+
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={limparFiltros}
+                  style={styles.botaoLimparFiltro}
+                >
+                  <Text style={styles.textoLimparFiltro}>Limpar</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Text style={styles.contagem}>
+                {transacoes.length}{' '}
+                {transacoes.length === 1 ? 'transação' : 'transações'}
+              </Text>
+            )}
+
+            {estado.origem === 'aparelho' && (
               <Text style={styles.aviso}>
                 Sem conexão: mostrando dados do aparelho.
               </Text>
@@ -138,7 +182,11 @@ export default function TelaTransacoes() {
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.vazio}>Nenhuma transação cadastrada.</Text>
+          <Text style={styles.vazio}>
+            {filtroAtivo
+              ? 'Nenhuma transação para este filtro.'
+              : 'Nenhuma transação cadastrada.'}
+          </Text>
         }
       />
 
@@ -150,47 +198,74 @@ export default function TelaTransacoes() {
 const styles = StyleSheet.create({
   container: {
     padding: espacos.md,
+    paddingTop: 50,
     backgroundColor: cores.papel,
     flexGrow: 1,
   },
 
-  titulo: {
-  color: cores.tinta,
-  fontSize: 30,
-  fontWeight: '700',
-  marginBottom: espacos.sm,
-},
-
-  subtitulo: {
-    color: cores.tintaSuave,
-    marginBottom: espacos.lg,
-  },
-
   botaoNova: {
     backgroundColor: cores.receita,
-
     borderRadius: raio,
-
     padding: espacos.md,
+    marginBottom: espacos.md,
+  },
 
-    marginBottom: espacos.lg,
+  pressionado: {
+    opacity: 0.8,
+  },
+
+  contagem: {
+    color: cores.tintaSuave,
+    marginBottom: espacos.sm,
+  },
+
+  faixaFiltro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacos.sm,
+    backgroundColor: cores.papelCartao,
+    borderWidth: 1,
+    borderColor: cores.dourado,
+    borderRadius: raio,
+    paddingVertical: espacos.sm,
+    paddingHorizontal: espacos.md,
+    marginBottom: espacos.md,
+  },
+
+  textoFiltro: {
+    flex: 1,
+    color: cores.tinta,
+  },
+
+  botaoLimparFiltro: {
+    borderWidth: 1,
+    borderColor: cores.tinta,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+
+  textoLimparFiltro: {
+    color: cores.tinta,
+    fontWeight: '700',
+    fontSize: 12,
   },
 
   textoBotao: {
-    textAlign: "center",
-    fontWeight: "700",
+    textAlign: 'center',
+    fontWeight: '700',
     color: cores.papelCartao,
   },
 
   aviso: {
     marginBottom: espacos.sm,
-    color: "#d97706",
+    color: '#d97706',
   },
 
   centro: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   carregando: {
@@ -198,17 +273,17 @@ const styles = StyleSheet.create({
   },
 
   erro: {
-    color: "red",
-    fontWeight: "700",
+    color: 'red',
+    fontWeight: '700',
   },
 
   recarregar: {
     marginTop: espacos.md,
-    color: "blue",
+    color: 'blue',
   },
 
   vazio: {
-    textAlign: "center",
+    textAlign: 'center',
     color: cores.tintaSuave,
   },
 
@@ -218,45 +293,5 @@ const styles = StyleSheet.create({
 
   celula: {
     flex: 1,
-  },
-
-  resumo: {
-    marginBottom: espacos.lg,
-  },
-
-  cardResumo: {
-    backgroundColor: cores.papelCartao,
-    borderWidth: 1,
-    borderColor: cores.borda,
-    borderRadius: raio,
-    padding: espacos.md,
-    marginBottom: espacos.sm,
-  },
-
-  rotuloResumo: {
-    color: cores.tintaSuave,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  receitaResumo: {
-    color: cores.receita,
-    fontSize: 22,
-    fontWeight: "700",
-    marginTop: 4,
-  },
-
-  despesaResumo: {
-    color: cores.despesa,
-    fontSize: 22,
-    fontWeight: "700",
-    marginTop: 4,
-  },
-
-  saldoResumo: {
-    color: cores.tinta,
-    fontSize: 24,
-    fontWeight: "700",
-    marginTop: 4,
   },
 });
