@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "uc8-projeto-mobile",
+    "name": "Fluxo de Caixa",
     "slug": "uc8-projeto-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,13 +11,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#20301f",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.uc8projetomobile"
+      "package": "br.com.pedroezequiel.fluxodecaixa"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -26,7 +26,21 @@
       "expo-sqlite",
       "expo-status-bar",
       "expo-font",
-      "@react-native-community/datetimepicker"
-    ]
+      "@react-native-community/datetimepicker",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#20301f"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "43a6bc2c-3608-41bb-8f8f-7b8dfd310594"
+      }
+    }
   }
 }
