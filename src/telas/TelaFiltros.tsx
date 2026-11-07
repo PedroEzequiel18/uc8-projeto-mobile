@@ -1,26 +1,55 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { categorias } from "../dados/categorias";
+import { categorias } from '../dados/categorias';
 
-import { cores, espacos, raio } from "../tema/tema";
+import { cores, espacos, raio } from '../tema/tema';
+
+import { useNavigation } from '@react-navigation/native';
+
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
+import type { RotasDasAbas } from '../navegacao/tipos';
+
+import { useFiltros, type TipoFiltro } from '../contexto/FiltrosContexto';
+
+import { CampoData } from '../components/CampoData';
 
 export default function TelaFiltros() {
-  const [tipo, setTipo] = useState("Todos");
+  const { filtros, atualizar } = useFiltros();
 
-  const [categoria, setCategoria] = useState("Todas");
+  const navigation = useNavigation<BottomTabNavigationProp<RotasDasAbas>>();
 
-  const [dataInicial, setDataInicial] = useState("");
+  // Começa com os filtros que já estão aplicados.
+  const [tipo, setTipo] = useState<TipoFiltro>(filtros.tipo);
 
-  const [dataFinal, setDataFinal] = useState("");
+  const [categoria, setCategoria] = useState(filtros.categoria);
+
+  // Datas guardadas como "aaaa-mm-dd" ("" = sem limite).
+  const [dataInicial, setDataInicial] = useState(filtros.dataInicial);
+
+  const [dataFinal, setDataFinal] = useState(filtros.dataFinal);
+
+  const [erro, setErro] = useState<string | undefined>();
+
+  function filtrar() {
+    if (dataInicial && dataFinal && dataInicial > dataFinal) {
+      setErro('A data inicial não pode ser depois da data final.');
+      return;
+    }
+
+    setErro(undefined);
+
+    atualizar({
+      tipo,
+      categoria,
+      dataInicial,
+      dataFinal,
+    });
+
+    navigation.navigate('AbaTransacoes', { screen: 'Transacoes' });
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -31,20 +60,20 @@ export default function TelaFiltros() {
       <View style={styles.grupo}>
         <Chip
           texto="Todos"
-          ativo={tipo === "Todos"}
-          aoPressionar={() => setTipo("Todos")}
+          ativo={tipo === 'Todos'}
+          aoPressionar={() => setTipo('Todos')}
         />
 
         <Chip
           texto="Receitas"
-          ativo={tipo === "Receitas"}
-          aoPressionar={() => setTipo("Receitas")}
+          ativo={tipo === 'Receitas'}
+          aoPressionar={() => setTipo('Receitas')}
         />
 
         <Chip
           texto="Despesas"
-          ativo={tipo === "Despesas"}
-          aoPressionar={() => setTipo("Despesas")}
+          ativo={tipo === 'Despesas'}
+          aoPressionar={() => setTipo('Despesas')}
         />
       </View>
       <Text style={styles.rotulo}>Categoria selecionada</Text>
@@ -55,41 +84,62 @@ export default function TelaFiltros() {
 
       <Text style={styles.listaCategorias}>Selecionar categoria:</Text>
 
-      {categorias.map((item) => (
-        <Pressable key={item.id} onPress={() => setCategoria(item.nome)}>
-          <Text style={styles.categoria}>• {item.nome}</Text>
-        </Pressable>
-      ))}
+      <View style={styles.grupo}>
+        <Chip
+          texto="Todas"
+          ativo={categoria === 'Todas'}
+          aoPressionar={() => setCategoria('Todas')}
+        />
 
-      <Text style={styles.rotulo}>Data Inicial</Text>
+        {categorias.map((item) => (
+          <Chip
+            key={item.id}
+            texto={item.nome}
+            ativo={categoria === item.nome}
+            aoPressionar={() => setCategoria(item.nome)}
+          />
+        ))}
+      </View>
 
-      <TextInput
-        style={styles.input}
-        value={dataInicial}
-        onChangeText={setDataInicial}
-        placeholder="dd/mm/aaaa"
-      />
+      <View style={styles.datas}>
+        <CampoData
+          rotulo="Data Inicial"
+          valor={dataInicial}
+          aoMudar={setDataInicial}
+          permitirVazio
+          textoVazio="Sem limite"
+        />
 
-      <Text style={styles.rotulo}>Data Final</Text>
+        <CampoData
+          rotulo="Data Final"
+          valor={dataFinal}
+          aoMudar={setDataFinal}
+          permitirVazio
+          textoVazio="Sem limite"
+        />
+      </View>
 
-      <TextInput
-        style={styles.input}
-        value={dataFinal}
-        onChangeText={setDataFinal}
-        placeholder="dd/mm/aaaa"
-      />
+      {erro && <Text style={styles.erro}>{erro}</Text>}
 
-      <Pressable style={styles.botaoFiltrar}>
+      <Pressable style={styles.botaoFiltrar} onPress={filtrar}>
         <Text style={styles.textoBotao}>Filtrar</Text>
       </Pressable>
 
       <Pressable
         style={styles.botaoLimpar}
         onPress={() => {
-          setTipo("Todos");
-          setCategoria("Todas");
-          setDataInicial("");
-          setDataFinal("");
+          setTipo('Todos');
+          setCategoria('Todas');
+          setDataInicial('');
+          setDataFinal('');
+          setErro(undefined);
+
+          atualizar({
+            tipo: 'Todos',
+            categoria: 'Todas',
+            dataInicial: '',
+            dataFinal: '',
+          });
         }}
       >
         <Text style={styles.textoBotaoLimpar}>Limpar</Text>
@@ -129,20 +179,20 @@ const styles = StyleSheet.create({
   titulo: {
     color: cores.tinta,
     fontSize: 26,
-    fontWeight: "700",
+    fontWeight: '700',
     marginBottom: espacos.lg,
   },
 
   rotulo: {
     color: cores.tinta,
-    fontWeight: "700",
+    fontWeight: '700',
     marginBottom: espacos.sm,
     marginTop: espacos.md,
   },
 
   grupo: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: espacos.sm,
   },
 
@@ -166,7 +216,7 @@ const styles = StyleSheet.create({
 
   textoChip: {
     color: cores.tinta,
-    fontWeight: "600",
+    fontWeight: '600',
   },
 
   textoChipAtivo: {
@@ -193,12 +243,16 @@ const styles = StyleSheet.create({
     marginTop: espacos.md,
     marginBottom: espacos.sm,
     color: cores.tinta,
-    fontWeight: "600",
+    fontWeight: '600',
   },
 
   categoria: {
     color: cores.tintaSuave,
     marginBottom: 6,
+  },
+
+  datas: {
+    marginTop: espacos.md,
   },
 
   input: {
@@ -224,9 +278,9 @@ const styles = StyleSheet.create({
   },
 
   textoBotao: {
-    textAlign: "center",
+    textAlign: 'center',
     color: cores.papelCartao,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 
   botaoLimpar: {
@@ -240,9 +294,15 @@ const styles = StyleSheet.create({
     marginTop: espacos.sm,
   },
 
+  erro: {
+    color: cores.despesa,
+    fontWeight: '700',
+    marginTop: espacos.sm,
+  },
+
   textoBotaoLimpar: {
-    textAlign: "center",
+    textAlign: 'center',
     color: cores.tinta,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 });

@@ -1,5 +1,5 @@
 export interface Categoria {
   id: number;
   nome: string;
-  tipo: 'receita' | 'despesa';
+  tipo: 'receita' | 'fixa' | 'variavel';
 }
