@@ -1,21 +1,18 @@
 import { useState } from 'react';
 
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Botao } from './Botao';
 import { Campo } from './Campo';
+import { CampoData } from './CampoData';
 
-import {
-  espacos,
-  cores,
-} from '../tema/tema';
+import { hojeIso, textoParaValor } from '../utils/datas';
+
+import { espacos, cores } from '../tema/tema';
 
 import { categorias } from '../dados/categorias';
+
+import type { Transacao } from '../types/Transacao';
 
 interface FormularioTransacaoProps {
   aoCriar: (
@@ -25,39 +22,61 @@ interface FormularioTransacaoProps {
     idCategoria: number,
     data: string,
   ) => void;
+
+  // Preenchem o formulário (edição ou leitura de comprovante PIX).
+  valoresIniciais?: Partial<Omit<Transacao, 'id'>>;
+  textoBotao?: string;
+
+  // Na edição, mantém os dados na tela depois de enviar.
+  manterAposEnviar?: boolean;
 }
 
 export function FormularioTransacao({
   aoCriar,
+  valoresIniciais,
+  textoBotao = 'Criar Transação',
+  manterAposEnviar = false,
 }: FormularioTransacaoProps) {
-  const [nome, setNome] = useState('');
+  const [nome, setNome] = useState(valoresIniciais?.nome ?? '');
 
-  const [descricao, setDescricao] =
-    useState('');
+  const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? '');
 
-  const [valor, setValor] =
-    useState('');
+  const [valor, setValor] = useState(
+    valoresIniciais?.valor !== undefined
+      ? valoresIniciais.valor.toFixed(2).replace('.', ',')
+      : '',
+  );
 
-  const [data, setData] =
-    useState(
-      new Date()
-        .toISOString()
-        .slice(0, 10),
-    );
+  const [data, setData] = useState(
+    valoresIniciais?.data?.slice(0, 10) ?? hojeIso(),
+  );
 
-  const [categoria, setCategoria] =
-    useState('1');
+  const [categoria, setCategoria] = useState(
+    String(valoresIniciais?.id_categoria ?? 1),
+  );
 
-  const [tocado, setTocado] =
-    useState(false);
+  const [tocado, setTocado] = useState(false);
 
-  const nomeVazio =
-    nome.trim() === '';
+  const [valorTocado, setValorTocado] = useState(false);
+
+  const nomeVazio = nome.trim() === '';
 
   const erroNome =
-    tocado && nomeVazio
-      ? 'Informe o nome da transação'
+    tocado && nomeVazio ? 'Informe o nome da transação' : undefined;
+
+  const valorNumerico = textoParaValor(valor);
+
+  const valorInvalido = !Number.isFinite(valorNumerico) || valorNumerico <= 0;
+
+  const erroValor =
+    valorTocado && valorInvalido
+      ? 'Informe um valor maior que zero (ex.: 1.234,56)'
       : undefined;
+
+  function mudarValor(texto: string) {
+    setValorTocado(true);
+    setValor(texto);
+  }
 
   function mudarNome(texto: string) {
     setTocado(true);
@@ -68,81 +87,58 @@ export function FormularioTransacao({
     aoCriar(
       nome,
       descricao,
-      Number(valor) || 0,
+      // Aceita "10,50", "1.234,56" e "10.5".
+      valorNumerico,
       Number(categoria),
       data,
     );
+
+    // Na edição, mantém os dados na tela.
+    if (manterAposEnviar) {
+      return;
+    }
 
     setNome('');
     setDescricao('');
     setValor('');
     setCategoria('1');
-
-    setData(
-      new Date()
-        .toISOString()
-        .slice(0, 10),
-    );
-
+    setData(hojeIso());
     setTocado(false);
+    setValorTocado(false);
   }
 
   return (
     <View style={styles.container}>
-      <Campo
-        rotulo="Nome"
-        valor={nome}
-        aoMudar={mudarNome}
-        erro={erroNome}
-      />
+      <Campo rotulo="Nome" valor={nome} aoMudar={mudarNome} erro={erroNome} />
 
-      <Campo
-        rotulo="Descrição"
-        valor={descricao}
-        aoMudar={setDescricao}
-      />
+      <Campo rotulo="Descrição" valor={descricao} aoMudar={setDescricao} />
 
       <Campo
         rotulo="Valor"
         valor={valor}
-        aoMudar={setValor}
-        tipoDeTeclado="numeric"
+        aoMudar={mudarValor}
+        erro={erroValor}
+        tipoDeTeclado="decimal-pad"
       />
 
-      <Campo
-        rotulo="Data"
-        valor={data}
-        aoMudar={setData}
-      />
+      <CampoData rotulo="Data" valor={data} aoMudar={setData} />
 
-      <Text style={styles.rotuloCategoria}>
-        Categoria
-      </Text>
+      <Text style={styles.rotuloCategoria}>Categoria</Text>
 
       <View style={styles.grupoCategorias}>
         {categorias.map((item) => {
-          const selecionada =
-            categoria === String(item.id);
+          const selecionada = categoria === String(item.id);
 
           return (
             <Pressable
               key={item.id}
-              onPress={() =>
-                setCategoria(
-                  String(item.id),
-                )
-              }
-              style={[
-                styles.chip,
-                selecionada &&
-                  styles.chipSelecionado,
-              ]}
+              onPress={() => setCategoria(String(item.id))}
+              style={[styles.chip, selecionada && styles.chipSelecionado]}
             >
               <Text
                 style={[
                   styles.textoChip,
-                  selecionada &&
-                    styles.textoChipSelecionado,
+                  selecionada && styles.textoChipSelecionado,
                 ]}
               >
                 {item.nome}
@@ -152,22 +148,11 @@ export function FormularioTransacao({
         })}
       </View>
 
-      <Text style={styles.selecionada}>
-        Selecionada:{' '}
-        {
-          categorias.find(
-            (c) =>
-              c.id ===
-              Number(categoria),
-          )?.nome
-        }
-      </Text>
-
       <View style={styles.acoes}>
         <Botao
-          titulo="Criar Transação"
+          titulo={textoBotao}
           onPress={criar}
-          desabilitado={nomeVazio}
+          desabilitado={nomeVazio || valorInvalido}
         />
       </View>
     </View>
