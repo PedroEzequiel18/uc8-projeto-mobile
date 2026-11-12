@@ -33,10 +33,11 @@ O app registra transações financeiras em categorias, mostra o saldo e o resumo
 | Painel financeiro | Total que entrou, que saiu e saldo apurado, com botão para recalcular a partir da nuvem |
 | Resumo mensal | Barra com a porcentagem da receita do mês já gasta (verde, amarela a partir de 70% e vermelha a partir de 100%), receitas, despesas e quantidade de transações **do mês atual** |
 | Últimas transações | As 5 transações mais recentes, com atalho para o detalhe e para a lista completa |
-| Categorias | Barras por categoria (gráfico de despesas), com subtotal por grupo, com seletor de mês (‹ ›) e opção "Tudo"; categorias sem movimento ficam ocultas (com opção de mostrar) e há atalho para as transações dela |
+| Categorias | Barras por categoria (gráfico de despesas), com subtotal por grupo, com seletor de mês (‹ ›) e opção "Tudo"; botão **Nova categoria** (nome e tipo), que passa a aparecer na hora em Nova Transação, Filtros e Categorias; atalho para as transações dela |
 | Transações (CRUD) | Cadastrar, listar, ver detalhe, **editar** e **excluir** |
 | Filtros | Por tipo (receita/despesa), categoria e período, com seletor de data nativo |
 | Comprovante PIX | Importa imagem ou PDF e preenche valor, data e nome de quem recebeu |
+| Tipo e categoria | Na Nova Transação se escolhe Receita ou Despesa e só as categorias daquele tipo aparecem; o comprovante PIX começa em Despesa |
 | Sem internet | Mostra os dados guardados no aparelho e guarda cadastros para enviar depois |
 | Validação | Nome obrigatório, valor maior que zero (aceita `1.234,56`), data e categoria válidas |
 
@@ -153,7 +154,7 @@ O script completo, com RLS e permissões, está em `supabase/esquema.sql`.
 
 | Grupo | Categorias |
 |---|---|
-| Receitas | 1 Salário · 2 Freelance · 3 Investimentos |
+| Receitas | 1 Salário · 3 Investimentos |
 | Despesas fixas | 4 Internet · 5 Energia · 6 Água · 7 Academia · 8 Aluguel |
 | Despesas variáveis | 9 Mercado · 10 Transporte · 11 Lazer · 12 Restaurante |
 
@@ -269,7 +270,7 @@ npx eas-cli@latest build -p android --profile preview
 | Nenhum `any` | `git grep -nw any -- "*.ts" "*.tsx"` | Nenhuma linha |
 | Formatação | `npm run format:check` | Todos os arquivos no padrão |
 | Saúde do projeto | `npx expo-doctor` | 20/20 |
-| Roteiro de teste | `docs/roteiro_de_teste.md` | 30 casos (carga, offline, sincronização, CRUD, filtros, OCR, gráficos) |
+| Roteiro de teste | `docs/roteiro_de_teste.md` | 34 casos (carga, offline, sincronização, CRUD, filtros, OCR, gráficos) |
 
 O roteiro registra, para cada caso, os passos, o resultado esperado, o resultado obtido, onde e quando foi executado e a correção aplicada quando houve falha.
 
@@ -298,7 +299,7 @@ Em ordem de prioridade.
 
 ### Funcionalidades
 
-4. **Cadastro de categorias**, como no sistema desktop: criar, editar e escolher a cor, lidas do Supabase em vez de fixas no código.
+4. **Editar e apagar categorias** e escolher a cor. Criar categoria já existe: elas ficam na tabela `categorias` do Supabase, com cópia no aparelho.
 5. **Editar e excluir sem internet**, colocando essas operações na mesma fila de pendentes.
 6. **Busca por nome ou descrição** na lista de transações, aproveitando ou removendo a `TelaBusca` sem uso.
 7. **Transações recorrentes:** contas fixas (aluguel, internet) lançadas automaticamente todo mês.

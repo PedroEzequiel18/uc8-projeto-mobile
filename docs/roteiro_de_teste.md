@@ -37,5 +37,9 @@ Legenda do resultado:
 | C26 | Resumo mensal | Aba Início com transações de meses diferentes | Resumo Mensal soma só o mês atual (receitas, despesas e quantidade) | não executado | - | - |
 | C27 | Barra de gasto no Resumo Mensal | Aba Início com receita e despesa no mês | Mostra a porcentagem gasta; cor muda a partir de 70% e de 100% | não executado | - | - |
 | C28 | Últimas transações | Aba Início; tocar numa transação e em "Ver todas as transações" | Abre o detalhe; a lista completa abre sem filtro | não executado | - | - |
-| C29 | Categorias sem movimento | Aba Categorias; tocar em "Mostrar categorias sem movimento" | Só categorias com movimento aparecem; o link mostra as demais e depois oculta de novo |
+| C29 | Categoria sem movimento | Aba Categorias; olhar uma categoria sem gasto no mês | Aparece com "Sem movimentação no período" e traço no valor |
 | C30 | Voltar às categorias | Aba Categorias; tocar numa categoria; tocar em "Voltar" | O botão só aparece nesse caminho; ao tocar, volta para Categorias e a lista de Transações fica sem filtro | não executado | - | - |
+| C31 | Criar categoria | Aba Categorias; Nova categoria; nome e tipo; Criar categoria | A categoria aparece na lista e em Nova Transação e Filtros, sem reiniciar o app | não executado | - | - |
+| C32 | Categoria repetida | Aba Categorias; Nova categoria com um nome que já existe (também com letras maiúsculas) | Mensagem "Já existe uma categoria com esse nome."; nada é criado | não executado | - | - |
+| C33 | Categoria sem rede | Sem rede; Nova categoria; Criar categoria | Mensagem de falta de conexão; as categorias já guardadas continuam na tela | não executado | - | - |
+| C34 | Tipo e categoria | Nova Transação; tocar em Receita e depois em Despesa | A lista mostra só as categorias do tipo escolhido; a categoria marcada passa para a primeira dele; ao ler um comprovante PIX o tipo começa em Despesa | não executado | - | - |
