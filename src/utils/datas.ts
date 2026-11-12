@@ -57,12 +57,20 @@ export function textoParaValor(texto: string): number {
   return Number(limpo);
 }
 
+// Primeiro e último dia de um mês (mes de 0 a 11), em "aaaa-mm-dd".
+export function limitesDoMes(
+  ano: number,
+  mes: number,
+): { inicio: string; fim: string } {
+  return {
+    inicio: dateParaIso(new Date(ano, mes, 1)),
+    fim: dateParaIso(new Date(ano, mes + 1, 0)),
+  };
+}
+
 // Primeiro e último dia do mês atual, em "aaaa-mm-dd".
 export function limitesDoMesAtual(): { inicio: string; fim: string } {
   const hoje = new Date();
 
-  return {
-    inicio: dateParaIso(new Date(hoje.getFullYear(), hoje.getMonth(), 1)),
-    fim: dateParaIso(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)),
-  };
+  return limitesDoMes(hoje.getFullYear(), hoje.getMonth());
 }

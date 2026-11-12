@@ -37,12 +37,22 @@ export function calcularTotais(transacoes: Transacao[]): Totais {
   };
 }
 
-// Transações do mês atual ("aaaa-mm" igual ao de hoje).
+// Transações de um mês (mes de 0 a 11), comparando "aaaa-mm".
+export function doMes(
+  transacoes: Transacao[],
+  ano: number,
+  mes: number,
+): Transacao[] {
+  const alvo = `${ano}-${String(mes + 1).padStart(2, '0')}`;
+
+  return transacoes.filter((t) => t.data.slice(0, 7) === alvo);
+}
+
+// Transações do mês atual.
 export function doMesAtual(transacoes: Transacao[]): Transacao[] {
   const hoje = new Date();
-  const mes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
 
-  return transacoes.filter((t) => t.data.slice(0, 7) === mes);
+  return doMes(transacoes, hoje.getFullYear(), hoje.getMonth());
 }
 
 // 1234.5 -> "R$ 1.234,50" (sem depender de Intl).
@@ -69,8 +79,13 @@ const NOMES_MESES = [
   'dezembro',
 ];
 
+// Ex.: nomeDoMes(2026, 10) -> "novembro de 2026"
+export function nomeDoMes(ano: number, mes: number): string {
+  return `${NOMES_MESES[mes]} de ${ano}`;
+}
+
 export function nomeDoMesAtual(): string {
   const hoje = new Date();
 
-  return `${NOMES_MESES[hoje.getMonth()]} de ${hoje.getFullYear()}`;
+  return nomeDoMes(hoje.getFullYear(), hoje.getMonth());
 }

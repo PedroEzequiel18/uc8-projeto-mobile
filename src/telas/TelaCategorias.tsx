@@ -27,13 +27,16 @@ import type { Categoria } from '../types/Categoria';
 
 import type { Transacao } from '../types/Transacao';
 
-import { limitesDoMesAtual } from '../utils/datas';
+import { limitesDoMes } from '../utils/datas';
 
-import { doMesAtual, formatarMoeda } from '../utils/financeiro';
+import { doMes, formatarMoeda, nomeDoMes } from '../utils/financeiro';
 
 import { cores, espacos, raio } from '../tema/tema';
 
-type Periodo = 'mes' | 'tudo';
+interface MesEscolhido {
+  ano: number;
+  mes: number; // 0 a 11
+}
 
 interface ResumoCategoria {
   categoria: Categoria;
@@ -90,26 +93,67 @@ export default function TelaCategorias() {
 
   const navigation = useNavigation<BottomTabNavigationProp<RotasDasAbas>>();
 
-  const [periodo, setPeriodo] = useState<Periodo>('mes');
+  const hoje = new Date();
+
+  const [mesEscolhido, setMesEscolhido] = useState<MesEscolhido>({
+    ano: hoje.getFullYear(),
+    mes: hoje.getMonth(),
+  });
+
+  const [todoPeriodo, setTodoPeriodo] = useState(false);
+
+  const [mostrarVazias, setMostrarVazias] = useState(false);
 
   const todas = estado.tipo === 'pronto' ? estado.transacoes : [];
 
-  const doPeriodo = periodo === 'mes' ? doMesAtual(todas) : todas;
+  const doPeriodo = todoPeriodo
+    ? todas
+    : doMes(todas, mesEscolhido.ano, mesEscolhido.mes);
 
   const resumos = resumirPorCategoria(doPeriodo);
 
+  const semMovimento = resumos.filter((r) => r.quantidade === 0).length;
+
+  // Número do mês para comparar: ano * 12 + mês.
+  const indiceEscolhido = mesEscolhido.ano * 12 + mesEscolhido.mes;
+
+  const indiceAtual = hoje.getFullYear() * 12 + hoje.getMonth();
+
+  // Não deixa voltar para antes da transação mais antiga.
+  const maisAntiga = todas.reduce<number>((menor, t) => {
+    const [ano, mes] = t.data.slice(0, 7).split('-').map(Number);
+
+    return Math.min(menor, ano * 12 + (mes - 1));
+  }, indiceAtual);
+
+  const podeVoltar = indiceEscolhido > maisAntiga;
+
+  const podeAvancar = indiceEscolhido < indiceAtual;
+
+  function mudarMes(passo: number) {
+    const novo = new Date(mesEscolhido.ano, mesEscolhido.mes + passo, 1);
+
+    setMesEscolhido({ ano: novo.getFullYear(), mes: novo.getMonth() });
+    setTodoPeriodo(false);
+  }
+
   // Abre a aba Transações já filtrada pela categoria (e pelo mês, se for o caso).
   function verTransacoes(categoria: Categoria) {
-    const mes = limitesDoMesAtual();
+    const limites = todoPeriodo
+      ? undefined
+      : limitesDoMes(mesEscolhido.ano, mesEscolhido.mes);
 
     atualizar({
       tipo: 'Todos',
       categoria: categoria.nome,
-      dataInicial: periodo === 'mes' ? mes.inicio : '',
-      dataFinal: periodo === 'mes' ? mes.fim : '',
+      dataInicial: limites?.inicio ?? '',
+      dataFinal: limites?.fim ?? '',
     });
 
-    navigation.navigate('AbaTransacoes', { screen: 'Transacoes' });
+    navigation.navigate('AbaTransacoes', {
+      screen: 'Transacoes',
+      params: { origem: 'categorias' },
+    });
   }
 
   return (
@@ -121,18 +165,52 @@ export default function TelaCategorias() {
       />
 
       <View style={styles.periodos}>
-        <ChipPeriodo
-          texto="Este mês"
-          ativo={periodo === 'mes'}
-          aoPressionar={() => setPeriodo('mes')}
-        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Mês anterior"
+          disabled={!podeVoltar}
+          onPress={() => mudarMes(-1)}
+          style={[styles.botaoMes, !podeVoltar && styles.setaDesligada]}
+        >
+          <Text style={styles.textoSeta}>‹</Text>
+        </Pressable>
+
+        <Text style={styles.nomeMes} numberOfLines={1}>
+          {todoPeriodo
+            ? 'Todos os períodos'
+            : nomeDoMes(mesEscolhido.ano, mesEscolhido.mes)}
+        </Text>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Próximo mês"
+          disabled={!podeAvancar}
+          onPress={() => mudarMes(1)}
+          style={[styles.botaoMes, !podeAvancar && styles.setaDesligada]}
+        >
+          <Text style={styles.textoSeta}>›</Text>
+        </Pressable>
 
         <ChipPeriodo
           texto="Tudo"
-          ativo={periodo === 'tudo'}
-          aoPressionar={() => setPeriodo('tudo')}
+          ativo={todoPeriodo}
+          aoPressionar={() => setTodoPeriodo(!todoPeriodo)}
         />
       </View>
+
+      {semMovimento > 0 && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setMostrarVazias(!mostrarVazias)}
+          style={styles.alternarVazias}
+        >
+          <Text style={styles.textoAlternar}>
+            {mostrarVazias
+              ? 'Ocultar categorias sem movimento'
+              : `Mostrar categorias sem movimento (${semMovimento})`}
+          </Text>
+        </Pressable>
+      )}
 
       {estado.tipo === 'carregando' && (
         <Text style={styles.aviso}>Carregando transações...</Text>
@@ -144,6 +222,11 @@ export default function TelaCategorias() {
           .sort((a, b) => b.total - a.total);
 
         const totalGrupo = doGrupo.reduce((soma, r) => soma + r.total, 0);
+
+        // Por padrão, só mostra as categorias que tiveram movimento.
+        const visiveis = mostrarVazias
+          ? doGrupo
+          : doGrupo.filter((r) => r.quantidade > 0);
 
         return (
           <View key={grupo.tipo} style={styles.grupo}>
@@ -158,7 +241,11 @@ export default function TelaCategorias() {
               <Text style={styles.totalGrupo}>{formatarMoeda(totalGrupo)}</Text>
             </View>
 
-            {doGrupo.map((resumo) => (
+            {visiveis.length === 0 && (
+              <Text style={styles.grupoVazio}>Nada neste período.</Text>
+            )}
+
+            {visiveis.map((resumo) => (
               <LinhaCategoria
                 key={resumo.categoria.id}
                 resumo={resumo}
@@ -280,8 +367,55 @@ const styles = StyleSheet.create({
 
   periodos: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: espacos.sm,
     marginBottom: espacos.md,
+  },
+
+  botaoMes: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    backgroundColor: cores.papelCartao,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  setaDesligada: {
+    opacity: 0.35,
+  },
+
+  textoSeta: {
+    color: cores.tinta,
+    fontSize: 22,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+
+  nomeMes: {
+    flex: 1,
+    color: cores.tinta,
+    fontFamily: fonteSerifada,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+
+  alternarVazias: {
+    alignSelf: 'flex-start',
+    marginBottom: espacos.md,
+  },
+
+  textoAlternar: {
+    color: cores.receita,
+    fontWeight: '700',
+  },
+
+  grupoVazio: {
+    color: cores.tintaSuave,
+    paddingVertical: espacos.sm,
   },
 
   chip: {
