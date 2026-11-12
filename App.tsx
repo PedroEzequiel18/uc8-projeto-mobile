@@ -1,5 +1,9 @@
 import { NavigationContainer } from '@react-navigation/native';
 
+import type { LinkingOptions } from '@react-navigation/native';
+
+import * as Linking from 'expo-linking';
+
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -20,11 +24,55 @@ import { cores } from './src/tema/tema';
 import { FiltrosProvedor } from './src/contexto/FiltrosContexto';
 const Abas = createBottomTabNavigator<RotasDasAbas>();
 
+// Quando outro app compartilha um arquivo com este, o Android abre o app com um
+// link de host "expo-sharing". Trocamos esse link pelo da tela Nova Transação.
+function tratarLink(url: string | null): string | null {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    if (new URL(url).hostname === 'expo-sharing') {
+      return Linking.createURL('/nova-transacao');
+    }
+  } catch {
+    // Link que não dá para ler: segue como veio.
+  }
+
+  return url;
+}
+
+const linking: LinkingOptions<RotasDasAbas> = {
+  prefixes: [Linking.createURL('/')],
+
+  config: {
+    screens: {
+      AbaTransacoes: {
+        screens: {
+          NovaTransacao: 'nova-transacao',
+        },
+      },
+    },
+  },
+
+  async getInitialURL() {
+    return tratarLink(await Linking.getInitialURL());
+  },
+
+  subscribe(ouvinte) {
+    const assinatura = Linking.addEventListener('url', ({ url }) => {
+      ouvinte(tratarLink(url) ?? url);
+    });
+
+    return () => assinatura.remove();
+  },
+};
+
 export default function App() {
   return (
     <FiltrosProvedor>
       <TransacoesProvedor>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <Abas.Navigator
             initialRouteName="AbaInicio"
             screenOptions={({ route }) => ({

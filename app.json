@@ -2,6 +2,7 @@
   "expo": {
     "name": "Fluxo de Caixa",
     "slug": "uc8-projeto-mobile",
+    "scheme": "fluxodecaixa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -34,6 +35,16 @@
           "imageWidth": 180,
           "resizeMode": "contain",
           "backgroundColor": "#20301f"
+        }
+      ],
+      [
+        "expo-sharing",
+        {
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": ["image/*", "application/pdf"],
+            "multipleShareMimeTypes": []
+          }
         }
       ]
     ],
