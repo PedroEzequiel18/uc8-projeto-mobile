@@ -75,6 +75,7 @@ Em telas largas (tablet ou celular deitado, a partir de 600 dp) a lista de trans
 | **OCR.space** (API externa) | Extração de texto do comprovante PIX |
 | **@react-native-community/datetimepicker** | Calendário nativo para datas |
 | **expo-splash-screen** | Tela de abertura do APK |
+| **expo-sharing** / **expo-linking** | Receber o comprovante PIX pelo botão Compartilhar do banco: o app aparece na lista de compartilhamento e abre direto na tela Nova Transação (o app continua abrindo no Expo Go; o recebimento do Compartilhar só funciona no APK) |
 | **Prettier** | Padronização da formatação do código |
 | **EAS Build** | Geração do APK na nuvem da Expo |
 
@@ -252,6 +253,8 @@ npx eas-cli@latest build -p android --profile preview
 
 - O perfil `preview` do `eas.json` gera **.apk** (instala direto no celular), e não .aab (formato da Play Store).
 - O `.easignore` repete o `.gitignore`, **menos o `.env.local`**. Assim, as chaves `EXPO_PUBLIC_*` chegam ao build sem ir para o GitHub.
+**Link do build (APK):** https://expo.dev/accounts/pedroezequiel/projects/uc8-projeto-mobile/builds/5fad6562-277e-48ed-a291-37de0854d590
+
 - No fim do build aparece um link e um QR Code para baixar o APK. Na instalação, o Google Play Protect avisa que o desenvolvedor é desconhecido: toque em **Mais detalhes → Instalar mesmo assim**.
 
 **Identidade do app:** nome **Fluxo de Caixa**, pacote `br.com.pedroezequiel.fluxodecaixa`, ícone adaptativo (três barras subindo sobre fundo verde) e tela de abertura na mesma cor.
