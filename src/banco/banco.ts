@@ -62,16 +62,29 @@ function paraTransacao(linha: LinhaTransacao): Transacao {
   };
 }
 
-async function noBanco<T>(
+// Fila: o SQLite não aceita duas transações ao mesmo tempo na mesma conexão
+// ("cannot start a transaction within a transaction"). Cada operação espera a
+// anterior terminar, mesmo que a anterior tenha falhado.
+let fila: Promise<unknown> = Promise.resolve();
+
+function noBanco<T>(
   operacao: (db: SQLite.SQLiteDatabase) => Promise<T>,
 ): Promise<T> {
-  try {
-    const db = await banco();
+  const execucao = fila.then(async () => {
+    try {
+      const db = await banco();
 
-    return await operacao(db);
-  } catch (erro: unknown) {
-    throw new ErroDoBanco(erro instanceof Error ? erro.message : String(erro));
-  }
+      return await operacao(db);
+    } catch (erro: unknown) {
+      throw new ErroDoBanco(
+        erro instanceof Error ? erro.message : String(erro),
+      );
+    }
+  });
+
+  fila = execucao.catch(() => undefined);
+
+  return execucao;
 }
 
 export function listarLocal(): Promise<Transacao[]> {
