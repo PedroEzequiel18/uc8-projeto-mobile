@@ -2,7 +2,9 @@ import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CabecalhoFinanceiro } from '../components/CabecalhoFinanceiro';
 
-import { GraficoDespesas } from '../components/GraficoDespesas';
+import { BarraGastoMes } from '../components/BarraGastoMes';
+
+import { UltimasTransacoes } from '../components/UltimasTransacoes';
 
 import { useTransacoes } from '../contexto/TransacoesContexto';
 
@@ -39,12 +41,15 @@ export default function TelaDashboard() {
         }
       />
 
-      <GraficoDespesas transacoes={transacoes} />
-
       <View style={styles.cartaoResumo}>
         <Text style={styles.tituloResumo}>Resumo Mensal</Text>
 
         <Text style={styles.mes}>{nomeDoMesAtual()}</Text>
+
+        <BarraGastoMes
+          receitas={totaisDoMes.receitas}
+          despesas={totaisDoMes.despesas}
+        />
 
         <Linha
           rotulo="Receitas do mês"
@@ -57,15 +62,12 @@ export default function TelaDashboard() {
         />
 
         <Linha
-          rotulo="Total movimentado"
-          valor={formatarMoeda(totaisDoMes.movimentado)}
-        />
-
-        <Linha
           rotulo="Transações registradas"
           valor={String(totaisDoMes.quantidade)}
         />
       </View>
+
+      <UltimasTransacoes transacoes={transacoes} />
     </ScrollView>
   );
 }
@@ -93,6 +95,7 @@ const styles = StyleSheet.create({
     borderColor: cores.borda,
     borderRadius: raio,
     padding: espacos.lg,
+    marginBottom: espacos.md,
   },
 
   tituloResumo: {
