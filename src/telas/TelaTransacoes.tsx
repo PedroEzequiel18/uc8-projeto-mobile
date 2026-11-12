@@ -10,11 +10,15 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+
+import type { RouteProp } from '@react-navigation/native';
+
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import type { RotasDaPilha } from '../navegacao/tipos';
+import type { RotasDaPilha, RotasDasAbas } from '../navegacao/tipos';
 
 import { CartaoTransacao } from '../components/CartaoTransacao';
 
@@ -34,6 +38,10 @@ export default function TelaTransacoes() {
   const { filtros, atualizar } = useFiltros();
 
   const navigation = useNavigation<NativeStackNavigationProp<RotasDaPilha>>();
+
+  const abas = useNavigation<BottomTabNavigationProp<RotasDasAbas>>();
+
+  const route = useRoute<RouteProp<RotasDaPilha, 'Transacoes'>>();
 
   const { width } = useWindowDimensions();
 
@@ -72,11 +80,27 @@ export default function TelaTransacoes() {
 
     return true;
   });
+
+  // Se o filtro é uma categoria, a nova transação já nasce nela.
+  const categoriaFiltrada = categorias.find(
+    (c) => c.nome === filtros.categoria,
+  );
+
   const filtroAtivo =
     filtros.tipo !== 'Todos' ||
     filtros.categoria !== 'Todas' ||
     filtros.dataInicial !== '' ||
     filtros.dataFinal !== '';
+
+  // O botão Voltar só aparece se a lista foi aberta a partir de uma categoria.
+  const veioDeCategoria =
+    route.params?.origem === 'categorias' && categoriaFiltrada !== undefined;
+
+  function voltarParaCategorias() {
+    limparFiltros();
+    navigation.setParams({ origem: undefined });
+    abas.navigate('AbaCategorias');
+  }
 
   function limparFiltros() {
     atualizar({
@@ -124,6 +148,16 @@ export default function TelaTransacoes() {
         keyExtractor={(item) => String(item.id)}
         ListHeaderComponent={
           <>
+            {veioDeCategoria && (
+              <Pressable
+                accessibilityRole="button"
+                onPress={voltarParaCategorias}
+                style={styles.voltar}
+              >
+                <Text style={styles.textoVoltar}>‹ Voltar</Text>
+              </Pressable>
+            )}
+
             <CabecalhoTela
               sobretitulo="MOVIMENTAÇÕES"
               titulo="Transações"
@@ -136,9 +170,17 @@ export default function TelaTransacoes() {
                 styles.botaoNova,
                 pressed && styles.pressionado,
               ]}
-              onPress={() => navigation.navigate('NovaTransacao')}
+              onPress={() =>
+                navigation.navigate('NovaTransacao', {
+                  idCategoria: categoriaFiltrada?.id,
+                })
+              }
             >
-              <Text style={styles.textoBotao}>➕ Nova Transação</Text>
+              <Text style={styles.textoBotao}>
+                {categoriaFiltrada
+                  ? `➕ Nova Transação em ${categoriaFiltrada.nome}`
+                  : '➕ Nova Transação'}
+              </Text>
             </Pressable>
 
             {filtroAtivo ? (
@@ -201,6 +243,16 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     backgroundColor: cores.papel,
     flexGrow: 1,
+  },
+
+  voltar: {
+    alignSelf: 'flex-start',
+    marginBottom: espacos.sm,
+  },
+
+  textoVoltar: {
+    color: cores.receita,
+    fontWeight: '700',
   },
 
   botaoNova: {

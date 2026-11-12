@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   View,
@@ -9,11 +9,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+
+import type { RouteProp } from '@react-navigation/native';
 
 import * as ImagePicker from 'expo-image-picker';
 
 import * as DocumentPicker from 'expo-document-picker';
+
+import { useIncomingShare } from 'expo-sharing';
+
+import type { RotasDaPilha } from '../navegacao/tipos';
+
+import { CabecalhoTela } from '../components/CabecalhoTela';
 
 import { FormularioTransacao } from '../components/FormularioTransacao';
 
@@ -36,6 +44,16 @@ export default function TelaNovaTransacao() {
 
   const navigation = useNavigation();
 
+  const route = useRoute<RouteProp<RotasDaPilha, 'NovaTransacao'>>();
+
+  const idCategoriaInicial = route.params?.idCategoria;
+
+  // Comprovante enviado pelo botão Compartilhar do app do banco.
+  const { resolvedSharedPayloads, clearSharedPayloads } = useIncomingShare();
+
+  // Evita ler o mesmo compartilhamento duas vezes.
+  const compartilhamentoLido = useRef(false);
+
   const [erro, setErro] = useState<string | undefined>();
 
   const [arquivoSelecionado, setArquivoSelecionado] = useState<
@@ -48,12 +66,52 @@ export default function TelaNovaTransacao() {
 
   const [erroOcr, setErroOcr] = useState<string | undefined>();
 
-  const [preenchimento, setPreenchimento] = useState<
-    Preenchimento | undefined
-  >();
+  const [preenchimento, setPreenchimento] = useState<Preenchimento | undefined>(
+    idCategoriaInicial !== undefined
+      ? { id_categoria: idCategoriaInicial }
+      : undefined,
+  );
 
   // Muda a cada leitura para recriar o formulário com os novos valores.
   const [versaoFormulario, setVersaoFormulario] = useState(0);
+
+  // Chegou um comprovante pelo Compartilhar: lê e preenche o formulário.
+  useEffect(() => {
+    // Sem nada compartilhado: libera para o próximo comprovante.
+    if (resolvedSharedPayloads.length === 0) {
+      compartilhamentoLido.current = false;
+      return;
+    }
+
+    if (compartilhamentoLido.current) {
+      return;
+    }
+
+    const arquivo = resolvedSharedPayloads.find(
+      (item) =>
+        (item.contentType === 'image' || item.contentType === 'file') &&
+        item.contentUri !== null,
+    );
+
+    if (!arquivo || arquivo.contentUri === null) {
+      return;
+    }
+
+    compartilhamentoLido.current = true;
+
+    const mimeType =
+      arquivo.contentMimeType ??
+      (arquivo.contentType === 'image' ? 'image/jpeg' : 'application/pdf');
+
+    lerComprovante({
+      uri: arquivo.contentUri,
+      nome: arquivo.originalName ?? 'comprovante',
+      mimeType,
+    }).then(() => {
+      clearSharedPayloads();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedSharedPayloads]);
 
   async function lerComprovante(arquivo: ArquivoParaOcr) {
     setArquivoSelecionado(arquivo.nome);
@@ -70,6 +128,7 @@ export default function TelaNovaTransacao() {
         descricao: 'Comprovante PIX',
         valor: dados.valor,
         data: dados.data,
+        id_categoria: idCategoriaInicial,
       });
       setVersaoFormulario((atual) => atual + 1);
 
@@ -149,6 +208,16 @@ export default function TelaNovaTransacao() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => navigation.goBack()}
+        style={styles.voltar}
+      >
+        <Text style={styles.textoVoltar}>‹ Voltar</Text>
+      </Pressable>
+
+      <CabecalhoTela sobretitulo="MOVIMENTAÇÕES" titulo="Nova Transação" />
+
       <Text style={styles.dica}>
         Importe um comprovante PIX para preencher valor e data automaticamente.
       </Text>
@@ -205,8 +274,19 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: espacos.md,
+    paddingTop: 50,
     paddingBottom: espacos.lg * 2,
     backgroundColor: cores.papel,
+  },
+
+  voltar: {
+    alignSelf: 'flex-start',
+    marginBottom: espacos.sm,
+  },
+
+  textoVoltar: {
+    color: cores.receita,
+    fontWeight: '700',
   },
 
   titulo: {

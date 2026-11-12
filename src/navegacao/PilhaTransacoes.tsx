@@ -35,6 +35,8 @@ export function PilhaTransacoes() {
         component={TelaNovaTransacao}
         options={{
           title: 'Nova Transação',
+          // A tela tem cabeçalho próprio, igual ao das outras telas.
+          headerShown: false,
         }}
       />
 
