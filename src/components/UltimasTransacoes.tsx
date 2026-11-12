@@ -4,6 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
+import { useCategorias } from '../contexto/CategoriasContexto';
+
 import { useFiltros } from '../contexto/FiltrosContexto';
 
 import type { RotasDasAbas } from '../navegacao/tipos';
@@ -34,6 +36,8 @@ export function UltimasTransacoes({ transacoes }: { transacoes: Transacao[] }) {
 
   const { atualizar } = useFiltros();
 
+  const { categorias } = useCategorias();
+
   const recentes = maisRecentes(transacoes);
 
   // Abre a lista completa, sem filtro sobrando de uma consulta anterior.
@@ -56,7 +60,7 @@ export function UltimasTransacoes({ transacoes }: { transacoes: Transacao[] }) {
         <Text style={styles.vazio}>Nenhuma transação cadastrada.</Text>
       ) : (
         recentes.map((transacao) => {
-          const receita = ehReceita(transacao);
+          const receita = ehReceita(transacao, categorias);
 
           return (
             <Pressable

@@ -1,21 +1,12 @@
-export interface Categoria {
-  id: number;
-  nome: string;
-  tipo: 'receita' | 'fixa' | 'variavel';
-}
+import type { Categoria } from '../types/Categoria';
 
-export const categorias: Categoria[] = [
+// Categorias de fábrica: valem enquanto a lista da nuvem não chegou.
+export const categoriasPadrao: Categoria[] = [
   // RECEITAS
 
   {
     id: 1,
     nome: 'Salário',
-    tipo: 'receita',
-  },
-
-  {
-    id: 2,
-    nome: 'Freelance',
     tipo: 'receita',
   },
 

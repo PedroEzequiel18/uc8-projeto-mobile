@@ -125,7 +125,7 @@ export default function TelaNovaTransacao() {
 
       setPreenchimento({
         nome: dados.nome ? `PIX - ${dados.nome}` : 'PIX',
-        descricao: 'Comprovante PIX',
+        descricao: '',
         valor: dados.valor,
         data: dados.data,
         id_categoria: idCategoriaInicial,

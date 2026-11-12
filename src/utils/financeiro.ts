@@ -1,4 +1,4 @@
-import { categorias } from '../dados/categorias';
+import type { Categoria } from '../types/Categoria';
 
 import type { Transacao } from '../types/Transacao';
 
@@ -10,18 +10,24 @@ export interface Totais {
   quantidade: number;
 }
 
-export function ehReceita(transacao: Transacao): boolean {
+export function ehReceita(
+  transacao: Transacao,
+  categorias: Categoria[],
+): boolean {
   const categoria = categorias.find((c) => c.id === transacao.id_categoria);
 
   return categoria?.tipo === 'receita';
 }
 
-export function calcularTotais(transacoes: Transacao[]): Totais {
+export function calcularTotais(
+  transacoes: Transacao[],
+  categorias: Categoria[],
+): Totais {
   let receitas = 0;
   let despesas = 0;
 
   for (const transacao of transacoes) {
-    if (ehReceita(transacao)) {
+    if (ehReceita(transacao, categorias)) {
       receitas += transacao.valor;
     } else {
       despesas += transacao.valor;

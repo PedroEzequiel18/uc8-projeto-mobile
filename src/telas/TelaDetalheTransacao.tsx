@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useTransacoes } from '../contexto/TransacoesContexto';
-import { categorias } from '../dados/categorias';
+import { useCategorias } from '../contexto/CategoriasContexto';
 import { dataParaTexto } from '../utils/datas';
 import { formatarMoeda } from '../utils/financeiro';
 import { cores, espacos, raio } from '../tema/tema';
@@ -22,6 +22,8 @@ export default function TelaDetalheTransacao({
   const { id } = route.params;
 
   const { buscar, remover } = useTransacoes();
+
+  const { categorias } = useCategorias();
 
   const transacao = buscar(id);
   const categoria = categorias.find((c) => c.id === transacao?.id_categoria);
@@ -64,7 +66,9 @@ export default function TelaDetalheTransacao({
       <View style={styles.cartao}>
         <Text style={styles.titulo}>{transacao.nome}</Text>
 
-        <Text style={styles.descricao}>{transacao.descricao}</Text>
+        {!!transacao.descricao && (
+          <Text style={styles.descricao}>{transacao.descricao}</Text>
+        )}
 
         <View style={styles.blocoValor}>
           <Text style={styles.rotulo}>VALOR</Text>

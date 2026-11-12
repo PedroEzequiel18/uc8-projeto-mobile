@@ -2,6 +2,8 @@ import * as SQLite from 'expo-sqlite';
 
 import { ErroDoBanco } from '../erros/erros';
 
+import type { Categoria } from '../types/Categoria';
+
 import type { Transacao } from '../types/Transacao';
 
 import type { DadosNovaTransacao } from '../servicos/transacoes';
@@ -32,6 +34,12 @@ function banco(): Promise<SQLite.SQLiteDatabase> {
             valor REAL NOT NULL,
             id_categoria INTEGER NOT NULL,
             data TEXT NOT NULL
+          );
+
+          CREATE TABLE IF NOT EXISTS categorias (
+            id INTEGER PRIMARY KEY NOT NULL,
+            nome TEXT NOT NULL,
+            tipo TEXT NOT NULL
           );
 
           CREATE TABLE IF NOT EXISTS pendentes (
@@ -205,4 +213,28 @@ export function removerPendente(id: number): Promise<void> {
   return noBanco(async (db) => {
     await db.runAsync('DELETE FROM pendentes WHERE id = ?', [id]);
   });
+}
+
+// Cópia local das categorias, para mostrá-las (inclusive as criadas) sem rede.
+export function listarCategoriasLocal(): Promise<Categoria[]> {
+  return noBanco((db) =>
+    db.getAllAsync<Categoria>(
+      'SELECT id, nome, tipo FROM categorias ORDER BY id',
+    ),
+  );
+}
+
+export function guardarCategoriasLocal(categorias: Categoria[]): Promise<void> {
+  return noBanco((db) =>
+    db.withTransactionAsync(async () => {
+      await db.runAsync('DELETE FROM categorias');
+
+      for (const categoria of categorias) {
+        await db.runAsync(
+          'INSERT INTO categorias (id, nome, tipo) VALUES (?, ?, ?)',
+          [categoria.id, categoria.nome, categoria.tipo],
+        );
+      }
+    }),
+  );
 }

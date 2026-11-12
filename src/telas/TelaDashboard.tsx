@@ -6,6 +6,8 @@ import { BarraGastoMes } from '../components/BarraGastoMes';
 
 import { UltimasTransacoes } from '../components/UltimasTransacoes';
 
+import { useCategorias } from '../contexto/CategoriasContexto';
+
 import { useTransacoes } from '../contexto/TransacoesContexto';
 
 import {
@@ -20,11 +22,13 @@ import { cores, espacos, raio } from '../tema/tema';
 export default function TelaDashboard() {
   const { estado, recarregar } = useTransacoes();
 
+  const { categorias } = useCategorias();
+
   const transacoes = estado.tipo === 'pronto' ? estado.transacoes : [];
 
-  const totais = calcularTotais(transacoes);
+  const totais = calcularTotais(transacoes, categorias);
 
-  const totaisDoMes = calcularTotais(doMesAtual(transacoes));
+  const totaisDoMes = calcularTotais(doMesAtual(transacoes), categorias);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

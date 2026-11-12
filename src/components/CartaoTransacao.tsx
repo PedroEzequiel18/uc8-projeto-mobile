@@ -8,7 +8,7 @@ import type { Transacao } from '../types/Transacao';
 
 import { cores, espacos, raio } from '../tema/tema';
 
-import { categorias } from '../dados/categorias';
+import { useCategorias } from '../contexto/CategoriasContexto';
 
 import { dataParaTexto } from '../utils/datas';
 import { formatarMoeda } from '../utils/financeiro';
@@ -19,6 +19,8 @@ interface CartaoTransacaoProps {
 
 export function CartaoTransacao({ transacao }: CartaoTransacaoProps) {
   const navigation = useNavigation<NativeStackNavigationProp<RotasDaPilha>>();
+
+  const { categorias } = useCategorias();
 
   const categoria = categorias.find((c) => c.id === transacao.id_categoria);
 

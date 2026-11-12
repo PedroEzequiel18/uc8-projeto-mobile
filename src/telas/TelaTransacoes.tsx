@@ -28,7 +28,7 @@ import { cores, espacos, raio } from '../tema/tema';
 
 import { useFiltros } from '../contexto/FiltrosContexto';
 
-import { categorias } from '../dados/categorias';
+import { useCategorias } from '../contexto/CategoriasContexto';
 
 import { CabecalhoTela } from '../components/CabecalhoTela';
 
@@ -36,6 +36,8 @@ export default function TelaTransacoes() {
   const { estado, recarregar } = useTransacoes();
 
   const { filtros, atualizar } = useFiltros();
+
+  const { categorias } = useCategorias();
 
   const navigation = useNavigation<NativeStackNavigationProp<RotasDaPilha>>();
 

@@ -10,9 +10,20 @@ import { hojeIso, textoParaValor } from '../utils/datas';
 
 import { espacos, cores } from '../tema/tema';
 
-import { categorias } from '../dados/categorias';
+import { useCategorias } from '../contexto/CategoriasContexto';
+
+import type { Categoria } from '../types/Categoria';
 
 import type { Transacao } from '../types/Transacao';
+
+type TipoLancamento = 'receita' | 'despesa';
+
+// Despesa reúne as categorias fixas e as variáveis.
+function ehDoTipo(categoria: Categoria, tipo: TipoLancamento): boolean {
+  return tipo === 'receita'
+    ? categoria.tipo === 'receita'
+    : categoria.tipo !== 'receita';
+}
 
 interface FormularioTransacaoProps {
   aoCriar: (
@@ -37,9 +48,12 @@ export function FormularioTransacao({
   textoBotao = 'Criar Transação',
   manterAposEnviar = false,
 }: FormularioTransacaoProps) {
+  const { categorias } = useCategorias();
+
   const [nome, setNome] = useState(valoresIniciais?.nome ?? '');
 
-  const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? '');
+  // Não há mais campo de descrição: o que já existia numa transação é mantido.
+  const descricao = valoresIniciais?.descricao ?? '';
 
   const [valor, setValor] = useState(
     valoresIniciais?.valor !== undefined
@@ -51,8 +65,24 @@ export function FormularioTransacao({
     valoresIniciais?.data?.slice(0, 10) ?? hojeIso(),
   );
 
+  const idInicial = valoresIniciais?.id_categoria;
+
+  // O tipo vem da categoria (edição); sem categoria, começa em Despesa,
+  // que é o caso mais comum de um comprovante PIX.
+  const [tipo, setTipo] = useState<TipoLancamento>(
+    idInicial !== undefined &&
+      categorias.find((c) => c.id === idInicial)?.tipo === 'receita'
+      ? 'receita'
+      : 'despesa',
+  );
+
   const [categoria, setCategoria] = useState(
-    String(valoresIniciais?.id_categoria ?? 1),
+    String(
+      idInicial ??
+        categorias.find((c) => ehDoTipo(c, 'despesa'))?.id ??
+        categorias[0]?.id ??
+        1,
+    ),
   );
 
   const [tocado, setTocado] = useState(false);
@@ -83,6 +113,17 @@ export function FormularioTransacao({
     setNome(texto);
   }
 
+  // Ao trocar o tipo, a categoria passa para a primeira daquele tipo.
+  function escolherTipo(novo: TipoLancamento) {
+    setTipo(novo);
+
+    const primeira = categorias.find((c) => ehDoTipo(c, novo));
+
+    if (primeira !== undefined) {
+      setCategoria(String(primeira.id));
+    }
+  }
+
   function criar() {
     aoCriar(
       nome,
@@ -99,9 +140,11 @@ export function FormularioTransacao({
     }
 
     setNome('');
-    setDescricao('');
     setValor('');
-    setCategoria('1');
+    setTipo('despesa');
+    setCategoria(
+      String(categorias.find((c) => ehDoTipo(c, 'despesa'))?.id ?? 1),
+    );
     setData(hojeIso());
     setTocado(false);
     setValorTocado(false);
@@ -110,8 +153,6 @@ export function FormularioTransacao({
   return (
     <View style={styles.container}>
       <Campo rotulo="Nome" valor={nome} aoMudar={mudarNome} erro={erroNome} />
-
-      <Campo rotulo="Descrição" valor={descricao} aoMudar={setDescricao} />
 
       <Campo
         rotulo="Valor"
@@ -123,29 +164,73 @@ export function FormularioTransacao({
 
       <CampoData rotulo="Data" valor={data} aoMudar={setData} />
 
+      <Text style={styles.rotuloCategoria}>Tipo</Text>
+
+      <View style={styles.grupoTipo}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: tipo === 'receita' }}
+          onPress={() => escolherTipo('receita')}
+          style={[
+            styles.botaoTipo,
+            tipo === 'receita' && styles.tipoReceitaAtivo,
+          ]}
+        >
+          <Text
+            style={[
+              styles.textoTipo,
+              tipo === 'receita' && styles.textoTipoAtivo,
+            ]}
+          >
+            Receita
+          </Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: tipo === 'despesa' }}
+          onPress={() => escolherTipo('despesa')}
+          style={[
+            styles.botaoTipo,
+            tipo === 'despesa' && styles.tipoDespesaAtivo,
+          ]}
+        >
+          <Text
+            style={[
+              styles.textoTipo,
+              tipo === 'despesa' && styles.textoTipoAtivo,
+            ]}
+          >
+            Despesa
+          </Text>
+        </Pressable>
+      </View>
+
       <Text style={styles.rotuloCategoria}>Categoria</Text>
 
       <View style={styles.grupoCategorias}>
-        {categorias.map((item) => {
-          const selecionada = categoria === String(item.id);
+        {categorias
+          .filter((item) => ehDoTipo(item, tipo))
+          .map((item) => {
+            const selecionada = categoria === String(item.id);
 
-          return (
-            <Pressable
-              key={item.id}
-              onPress={() => setCategoria(String(item.id))}
-              style={[styles.chip, selecionada && styles.chipSelecionado]}
-            >
-              <Text
-                style={[
-                  styles.textoChip,
-                  selecionada && styles.textoChipSelecionado,
-                ]}
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => setCategoria(String(item.id))}
+                style={[styles.chip, selecionada && styles.chipSelecionado]}
               >
-                {item.nome}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <Text
+                  style={[
+                    styles.textoChip,
+                    selecionada && styles.textoChipSelecionado,
+                  ]}
+                >
+                  {item.nome}
+                </Text>
+              </Pressable>
+            );
+          })}
       </View>
 
       <View style={styles.acoes}>
@@ -168,6 +253,40 @@ const styles = StyleSheet.create({
     color: cores.tintaSuave,
     marginTop: espacos.sm,
     marginBottom: espacos.sm,
+  },
+
+  grupoTipo: {
+    flexDirection: 'row',
+    gap: espacos.sm,
+  },
+
+  botaoTipo: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    backgroundColor: cores.papelCartao,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+
+  tipoReceitaAtivo: {
+    backgroundColor: cores.receita,
+    borderColor: cores.receita,
+  },
+
+  tipoDespesaAtivo: {
+    backgroundColor: cores.despesa,
+    borderColor: cores.despesa,
+  },
+
+  textoTipo: {
+    color: cores.tinta,
+    fontWeight: '700',
+  },
+
+  textoTipoAtivo: {
+    color: cores.papelCartao,
   },
 
   grupoCategorias: {

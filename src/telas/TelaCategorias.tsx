@@ -19,7 +19,13 @@ import { useFiltros } from '../contexto/FiltrosContexto';
 
 import { useTransacoes } from '../contexto/TransacoesContexto';
 
-import { categorias } from '../dados/categorias';
+import { useCategorias } from '../contexto/CategoriasContexto';
+
+import { Botao } from '../components/Botao';
+
+import { Campo } from '../components/Campo';
+
+import { registrarErro } from '../erros/erros';
 
 import type { RotasDasAbas } from '../navegacao/tipos';
 
@@ -72,7 +78,10 @@ const GRUPOS: Grupo[] = [
   },
 ];
 
-function resumirPorCategoria(transacoes: Transacao[]): ResumoCategoria[] {
+function resumirPorCategoria(
+  transacoes: Transacao[],
+  categorias: Categoria[],
+): ResumoCategoria[] {
   return categorias.map((categoria) => {
     const daCategoria = transacoes.filter(
       (t) => t.id_categoria === categoria.id,
@@ -91,6 +100,8 @@ export default function TelaCategorias() {
 
   const { atualizar } = useFiltros();
 
+  const { categorias, criar } = useCategorias();
+
   const navigation = useNavigation<BottomTabNavigationProp<RotasDasAbas>>();
 
   const hoje = new Date();
@@ -102,7 +113,16 @@ export default function TelaCategorias() {
 
   const [todoPeriodo, setTodoPeriodo] = useState(false);
 
-  const [mostrarVazias, setMostrarVazias] = useState(false);
+  // Formulário de nova categoria.
+  const [criando, setCriando] = useState(false);
+
+  const [nomeNova, setNomeNova] = useState('');
+
+  const [tipoNovo, setTipoNovo] = useState<Categoria['tipo']>('variavel');
+
+  const [erroNova, setErroNova] = useState<string | undefined>();
+
+  const [salvandoNova, setSalvandoNova] = useState(false);
 
   const todas = estado.tipo === 'pronto' ? estado.transacoes : [];
 
@@ -110,9 +130,7 @@ export default function TelaCategorias() {
     ? todas
     : doMes(todas, mesEscolhido.ano, mesEscolhido.mes);
 
-  const resumos = resumirPorCategoria(doPeriodo);
-
-  const semMovimento = resumos.filter((r) => r.quantidade === 0).length;
+  const resumos = resumirPorCategoria(doPeriodo, categorias);
 
   // Número do mês para comparar: ano * 12 + mês.
   const indiceEscolhido = mesEscolhido.ano * 12 + mesEscolhido.mes;
@@ -135,6 +153,33 @@ export default function TelaCategorias() {
 
     setMesEscolhido({ ano: novo.getFullYear(), mes: novo.getMonth() });
     setTodoPeriodo(false);
+  }
+
+  function criarNova() {
+    if (salvandoNova) {
+      return;
+    }
+
+    setErroNova(undefined);
+    setSalvandoNova(true);
+
+    criar(nomeNova, tipoNovo)
+      .then(() => {
+        setNomeNova('');
+        setTipoNovo('variavel');
+        setCriando(false);
+        setSalvandoNova(false);
+      })
+      .catch((falha: unknown) => {
+        setErroNova(registrarErro('categoria', falha).mensagem);
+        setSalvandoNova(false);
+      });
+  }
+
+  function cancelarNova() {
+    setNomeNova('');
+    setErroNova(undefined);
+    setCriando(false);
   }
 
   // Abre a aba Transações já filtrada pela categoria (e pelo mês, se for o caso).
@@ -198,17 +243,62 @@ export default function TelaCategorias() {
         />
       </View>
 
-      {semMovimento > 0 && (
+      {criando ? (
+        <View style={styles.cartaoNova}>
+          <Text style={styles.tituloNova}>Nova categoria</Text>
+
+          <Campo rotulo="Nome" valor={nomeNova} aoMudar={setNomeNova} />
+
+          <Text style={styles.rotuloTipo}>Tipo</Text>
+
+          <View style={styles.tiposNova}>
+            <ChipPeriodo
+              texto="Receita"
+              ativo={tipoNovo === 'receita'}
+              aoPressionar={() => setTipoNovo('receita')}
+            />
+
+            <ChipPeriodo
+              texto="Despesa fixa"
+              ativo={tipoNovo === 'fixa'}
+              aoPressionar={() => setTipoNovo('fixa')}
+            />
+
+            <ChipPeriodo
+              texto="Despesa variável"
+              ativo={tipoNovo === 'variavel'}
+              aoPressionar={() => setTipoNovo('variavel')}
+            />
+          </View>
+
+          {erroNova !== undefined && (
+            <Text style={styles.erroNova}>{erroNova}</Text>
+          )}
+
+          <View style={styles.acoesNova}>
+            <Botao
+              titulo={salvandoNova ? 'Criando...' : 'Criar categoria'}
+              onPress={criarNova}
+              desabilitado={salvandoNova || nomeNova.trim() === ''}
+            />
+
+            <Botao
+              titulo="Cancelar"
+              variante="secundario"
+              onPress={cancelarNova}
+            />
+          </View>
+        </View>
+      ) : (
         <Pressable
           accessibilityRole="button"
-          onPress={() => setMostrarVazias(!mostrarVazias)}
-          style={styles.alternarVazias}
+          onPress={() => setCriando(true)}
+          style={({ pressed }) => [
+            styles.botaoNova,
+            pressed && styles.pressionado,
+          ]}
         >
-          <Text style={styles.textoAlternar}>
-            {mostrarVazias
-              ? 'Ocultar categorias sem movimento'
-              : `Mostrar categorias sem movimento (${semMovimento})`}
-          </Text>
+          <Text style={styles.textoBotaoNova}>➕ Nova categoria</Text>
         </Pressable>
       )}
 
@@ -223,11 +313,6 @@ export default function TelaCategorias() {
 
         const totalGrupo = doGrupo.reduce((soma, r) => soma + r.total, 0);
 
-        // Por padrão, só mostra as categorias que tiveram movimento.
-        const visiveis = mostrarVazias
-          ? doGrupo
-          : doGrupo.filter((r) => r.quantidade > 0);
-
         return (
           <View key={grupo.tipo} style={styles.grupo}>
             <View style={styles.cabecalhoGrupo}>
@@ -241,11 +326,7 @@ export default function TelaCategorias() {
               <Text style={styles.totalGrupo}>{formatarMoeda(totalGrupo)}</Text>
             </View>
 
-            {visiveis.length === 0 && (
-              <Text style={styles.grupoVazio}>Nada neste período.</Text>
-            )}
-
-            {visiveis.map((resumo) => (
+            {doGrupo.map((resumo) => (
               <LinhaCategoria
                 key={resumo.categoria.id}
                 resumo={resumo}
@@ -403,21 +484,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  alternarVazias: {
-    alignSelf: 'flex-start',
-    marginBottom: espacos.md,
-  },
-
-  textoAlternar: {
-    color: cores.receita,
-    fontWeight: '700',
-  },
-
-  grupoVazio: {
-    color: cores.tintaSuave,
-    paddingVertical: espacos.sm,
-  },
-
   chip: {
     borderWidth: 1,
     borderColor: cores.borda,
@@ -526,6 +592,60 @@ const styles = StyleSheet.create({
     color: cores.tintaSuave,
     fontSize: 20,
     lineHeight: 20,
+  },
+
+  botaoNova: {
+    backgroundColor: cores.receita,
+    borderRadius: raio,
+    padding: espacos.md,
+    marginBottom: espacos.md,
+  },
+
+  textoBotaoNova: {
+    textAlign: 'center',
+    fontWeight: '700',
+    color: cores.papelCartao,
+  },
+
+  cartaoNova: {
+    backgroundColor: cores.papelCartao,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: raio,
+    padding: espacos.md,
+    marginBottom: espacos.md,
+  },
+
+  tituloNova: {
+    color: cores.tinta,
+    fontFamily: fonteSerifada,
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: espacos.sm,
+  },
+
+  rotuloTipo: {
+    color: cores.tintaSuave,
+    marginTop: espacos.xs,
+    marginBottom: espacos.sm,
+  },
+
+  tiposNova: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: espacos.sm,
+  },
+
+  erroNova: {
+    color: '#dc2626',
+    fontWeight: '700',
+    marginTop: espacos.sm,
+  },
+
+  acoesNova: {
+    flexDirection: 'row',
+    gap: espacos.sm,
+    marginTop: espacos.md,
   },
 
   textoApagado: {

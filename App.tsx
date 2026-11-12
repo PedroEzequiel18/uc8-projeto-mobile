@@ -8,6 +8,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { Ionicons } from '@expo/vector-icons';
 
+import { CategoriasProvedor } from './src/contexto/CategoriasContexto';
+
 import { TransacoesProvedor } from './src/contexto/TransacoesContexto';
 
 import { PilhaTransacoes } from './src/navegacao/PilhaTransacoes';
@@ -71,103 +73,105 @@ const linking: LinkingOptions<RotasDasAbas> = {
 export default function App() {
   return (
     <FiltrosProvedor>
-      <TransacoesProvedor>
-        <NavigationContainer linking={linking}>
-          <Abas.Navigator
-            initialRouteName="AbaInicio"
-            screenOptions={({ route }) => ({
-              headerShown: false,
+      <CategoriasProvedor>
+        <TransacoesProvedor>
+          <NavigationContainer linking={linking}>
+            <Abas.Navigator
+              initialRouteName="AbaInicio"
+              screenOptions={({ route }) => ({
+                headerShown: false,
 
-              tabBarActiveTintColor: cores.receita,
+                tabBarActiveTintColor: cores.receita,
 
-              tabBarInactiveTintColor: '#7a7a7a',
+                tabBarInactiveTintColor: '#7a7a7a',
 
-              tabBarStyle: {
-                height: 70,
-                backgroundColor: cores.papelCartao,
+                tabBarStyle: {
+                  height: 70,
+                  backgroundColor: cores.papelCartao,
 
-                borderTopWidth: 0,
+                  borderTopWidth: 0,
 
-                paddingTop: 8,
-                paddingBottom: 8,
-              },
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                },
 
-              tabBarLabelStyle: {
-                fontSize: 12,
-                fontWeight: '600',
-              },
+                tabBarLabelStyle: {
+                  fontSize: 12,
+                  fontWeight: '600',
+                },
 
-              tabBarIcon: ({ color, size }) => {
-                let iconName: keyof typeof Ionicons.glyphMap = 'home';
+                tabBarIcon: ({ color, size }) => {
+                  let iconName: keyof typeof Ionicons.glyphMap = 'home';
 
-                switch (route.name) {
-                  case 'AbaInicio':
-                    iconName = 'home';
-                    break;
+                  switch (route.name) {
+                    case 'AbaInicio':
+                      iconName = 'home';
+                      break;
 
-                  case 'AbaCategorias':
-                    iconName = 'grid';
-                    break;
+                    case 'AbaCategorias':
+                      iconName = 'grid';
+                      break;
 
-                  case 'AbaTransacoes':
-                    iconName = 'wallet';
-                    break;
+                    case 'AbaTransacoes':
+                      iconName = 'wallet';
+                      break;
 
-                  case 'AbaFiltros':
-                    iconName = 'funnel';
-                    break;
+                    case 'AbaFiltros':
+                      iconName = 'funnel';
+                      break;
 
-                  case 'AbaSobre':
-                    iconName = 'information-circle';
-                    break;
-                }
+                    case 'AbaSobre':
+                      iconName = 'information-circle';
+                      break;
+                  }
 
-                return <Ionicons name={iconName} color={color} size={size} />;
-              },
-            })}
-          >
-            <Abas.Screen
-              name="AbaInicio"
-              component={TelaDashboard}
-              options={{
-                title: 'Início',
-              }}
-            />
+                  return <Ionicons name={iconName} color={color} size={size} />;
+                },
+              })}
+            >
+              <Abas.Screen
+                name="AbaInicio"
+                component={TelaDashboard}
+                options={{
+                  title: 'Início',
+                }}
+              />
 
-            <Abas.Screen
-              name="AbaCategorias"
-              component={TelaCategorias}
-              options={{
-                title: 'Categorias',
-              }}
-            />
+              <Abas.Screen
+                name="AbaCategorias"
+                component={TelaCategorias}
+                options={{
+                  title: 'Categorias',
+                }}
+              />
 
-            <Abas.Screen
-              name="AbaTransacoes"
-              component={PilhaTransacoes}
-              options={{
-                title: 'Transações',
-              }}
-            />
+              <Abas.Screen
+                name="AbaTransacoes"
+                component={PilhaTransacoes}
+                options={{
+                  title: 'Transações',
+                }}
+              />
 
-            <Abas.Screen
-              name="AbaFiltros"
-              component={TelaFiltros}
-              options={{
-                title: 'Filtros',
-              }}
-            />
+              <Abas.Screen
+                name="AbaFiltros"
+                component={TelaFiltros}
+                options={{
+                  title: 'Filtros',
+                }}
+              />
 
-            <Abas.Screen
-              name="AbaSobre"
-              component={TelaSobre}
-              options={{
-                title: 'Sobre',
-              }}
-            />
-          </Abas.Navigator>
-        </NavigationContainer>
-      </TransacoesProvedor>
+              <Abas.Screen
+                name="AbaSobre"
+                component={TelaSobre}
+                options={{
+                  title: 'Sobre',
+                }}
+              />
+            </Abas.Navigator>
+          </NavigationContainer>
+        </TransacoesProvedor>
+      </CategoriasProvedor>
     </FiltrosProvedor>
   );
 }

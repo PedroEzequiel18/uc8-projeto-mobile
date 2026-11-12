@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { categorias } from '../dados/categorias';
+import { useCategorias } from '../contexto/CategoriasContexto';
 
 import { cores, espacos, raio } from '../tema/tema';
 
@@ -18,6 +18,8 @@ import { CampoData } from '../components/CampoData';
 
 export default function TelaFiltros() {
   const { filtros, atualizar } = useFiltros();
+
+  const { categorias } = useCategorias();
 
   const navigation = useNavigation<BottomTabNavigationProp<RotasDasAbas>>();
 

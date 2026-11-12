@@ -75,10 +75,10 @@ function ehListaDeTransacoes(valor: unknown): valor is TransacaoRemota[] {
   return Array.isArray(valor) && valor.every(ehTransacaoRemota);
 }
 
-async function requisitar(
+export async function requisitar(
   caminho: string,
   metodo: 'GET' | 'POST' | 'DELETE' | 'PATCH' = 'GET',
-  corpo?: DadosNovaTransacao,
+  corpo?: object,
 ): Promise<unknown> {
   const { url, chave } = configuracao();
 

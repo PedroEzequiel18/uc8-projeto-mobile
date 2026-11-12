@@ -19,7 +19,9 @@ import {
 
 import { ErroDeValidacao, registrarErro } from '../erros/erros';
 
-import { categorias } from '../dados/categorias';
+import { useCategorias } from './CategoriasContexto';
+
+import type { Categoria } from '../types/Categoria';
 
 import {
   carregarTransacoes,
@@ -35,6 +37,7 @@ function validarTransacao(
   valor: number,
   idCategoria: number,
   data: string,
+  categorias: Categoria[],
 ): void {
   if (nome.trim() === '') {
     throw new ErroDeValidacao('Informe o nome.');
@@ -102,6 +105,8 @@ const TransacoesContexto = createContext<ValorDasTransacoes | undefined>(
 );
 
 export function TransacoesProvedor({ children }: { children: ReactNode }) {
+  const { categorias } = useCategorias();
+
   const [estado, setEstado] = useState<EstadoTransacoes>({
     tipo: 'carregando',
   });
@@ -206,7 +211,7 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
     idCategoria: number,
     data: string,
   ): Promise<void> {
-    validarTransacao(nome, valor, idCategoria, data);
+    validarTransacao(nome, valor, idCategoria, data, categorias);
 
     const dados: DadosNovaTransacao = {
       nome,
@@ -252,7 +257,7 @@ export function TransacoesProvedor({ children }: { children: ReactNode }) {
     idCategoria: number,
     data: string,
   ): Promise<void> {
-    validarTransacao(nome, valor, idCategoria, data);
+    validarTransacao(nome, valor, idCategoria, data, categorias);
 
     const atualizada = await atualizarTransacao(id, {
       nome,
