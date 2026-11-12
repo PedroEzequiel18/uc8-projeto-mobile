@@ -31,7 +31,11 @@ Legenda do resultado:
 | C20 | OCR de comprovante PIX (imagem) | Nova Transação; Importar Imagem; print de comprovante PIX | Valor, data e nome preenchidos no formulário | aprovado | aparelho SM-A356E, 07/11/2026 | Envio multipart falhava no Android; trocado por base64 |
 | C21 | OCR sem internet | Sem rede; Importar Imagem | Mensagem de falha ao acessar o OCR; formulário continua utilizável | não executado | - | - |
 | C22 | OCR de arquivo grande | Importar foto com mais de 1 MB | Mensagem pedindo um print (limite de 1 MB) | não executado | - | - |
-| C23 | Categorias com valores | Aba Categorias; alternar Este mês / Tudo | Subtotais por grupo e valor por categoria mudam com o período | não executado | - | - |
+| C23 | Categorias com valores | Aba Categorias; trocar o mês com ‹ › e usar Tudo | Subtotais por grupo e valor por categoria mudam com o período; ‹ para no mês da transação mais antiga e › no mês atual | não executado | - | - |
 | C24 | Categoria abre transações | Aba Categorias; tocar em uma categoria | Transações filtradas por ela | não executado | - | - |
-| C25 | Gráfico de despesas | Aba Início; tocar em uma barra | Mostra percentual e quantidade daquela categoria | não executado | - | - |
-| C26 | Resumo mensal | Aba Início com transações de meses diferentes | Resumo Mensal soma só o mês atual | não executado | - | - |
+| C25 | Gráfico de despesas | Aba Categorias; olhar as barras de uma categoria com gasto | Barra proporcional ao grupo, com quantidade e percentual da categoria | não executado | - | - |
+| C26 | Resumo mensal | Aba Início com transações de meses diferentes | Resumo Mensal soma só o mês atual (receitas, despesas e quantidade) | não executado | - | - |
+| C27 | Barra de gasto no Resumo Mensal | Aba Início com receita e despesa no mês | Mostra a porcentagem gasta; cor muda a partir de 70% e de 100% | não executado | - | - |
+| C28 | Últimas transações | Aba Início; tocar numa transação e em "Ver todas as transações" | Abre o detalhe; a lista completa abre sem filtro | não executado | - | - |
+| C29 | Categorias sem movimento | Aba Categorias; tocar em "Mostrar categorias sem movimento" | Só categorias com movimento aparecem; o link mostra as demais e depois oculta de novo |
+| C30 | Voltar às categorias | Aba Categorias; tocar numa categoria; tocar em "Voltar" | O botão só aparece nesse caminho; ao tocar, volta para Categorias e a lista de Transações fica sem filtro | não executado | - | - |

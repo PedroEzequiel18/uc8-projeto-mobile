@@ -31,9 +31,9 @@ O app registra transações financeiras em categorias, mostra o saldo e o resumo
 | Funcionalidade | Descrição |
 |---|---|
 | Painel financeiro | Total que entrou, que saiu e saldo apurado, com botão para recalcular a partir da nuvem |
-| Resumo mensal | Receitas, despesas, total movimentado e quantidade de transações **do mês atual** |
-| Gráfico de despesas | Barras por categoria, do maior gasto para o menor, alternando entre "Este mês" e "Tudo" |
-| Categorias | Quanto cada categoria movimentou, com subtotal por grupo e atalho para as transações dela |
+| Resumo mensal | Barra com a porcentagem da receita do mês já gasta (verde, amarela a partir de 70% e vermelha a partir de 100%), receitas, despesas e quantidade de transações **do mês atual** |
+| Últimas transações | As 5 transações mais recentes, com atalho para o detalhe e para a lista completa |
+| Categorias | Barras por categoria (gráfico de despesas), com subtotal por grupo, com seletor de mês (‹ ›) e opção "Tudo"; categorias sem movimento ficam ocultas (com opção de mostrar) e há atalho para as transações dela |
 | Transações (CRUD) | Cadastrar, listar, ver detalhe, **editar** e **excluir** |
 | Filtros | Por tipo (receita/despesa), categoria e período, com seletor de data nativo |
 | Comprovante PIX | Importa imagem ou PDF e preenche valor, data e nome de quem recebeu |
@@ -48,8 +48,8 @@ O app usa **navegação por abas** na parte de baixo. A aba Transações tem uma
 
 | Aba / Tela | Arquivo | O que faz |
 |---|---|---|
-| **Início** | `src/telas/TelaDashboard.tsx` | Cabeçalho financeiro (Entrou, Saiu, Saldo apurado), gráfico de despesas por categoria e resumo mensal |
-| **Categorias** | `src/telas/TelaCategorias.tsx` | Receitas, despesas fixas e variáveis com valores do período; tocar numa categoria abre as transações dela já filtradas |
+| **Início** | `src/telas/TelaDashboard.tsx` | Cabeçalho financeiro (Entrou, Saiu, Saldo apurado), últimas 5 transações e resumo mensal (com a barra de porcentagem gasta) |
+| **Categorias** | `src/telas/TelaCategorias.tsx` | Receitas, despesas fixas e variáveis com valores do mês escolhido (ou de tudo); tocar numa categoria abre as transações dela já filtradas |
 | **Transações** | `src/telas/TelaTransacoes.tsx` | Lista em cartões (verde = receita, vermelho = despesa), botão Nova Transação, aviso de filtro ativo com botão Limpar |
 | ↳ Detalhe | `src/telas/TelaDetalheTransacao.tsx` | Nome, descrição, valor, data e categoria; botões Editar e Excluir (com confirmação) |
 | ↳ Nova Transação | `src/telas/TelaNovaTransacao.tsx` | Formulário + importação de comprovante PIX por imagem ou PDF |
@@ -93,7 +93,8 @@ src/
     CabecalhoTela           Sobretítulo, título serifado e régua
     CampoData               Campo com calendário nativo
     FormularioTransacao     Formulário de cadastro e edição
-    GraficoDespesas         Barras de despesas por categoria
+    BarraGastoMes           Porcentagem da receita do mês já gasta (dentro do Resumo Mensal)
+    UltimasTransacoes       As 5 transações mais recentes
     CartaoTransacao, Campo, Botao
   contexto/
     TransacoesContexto      Estado global das transações (carga, CRUD, sincronização)
@@ -265,7 +266,7 @@ npx eas-cli@latest build -p android --profile preview
 | Nenhum `any` | `git grep -nw any -- "*.ts" "*.tsx"` | Nenhuma linha |
 | Formatação | `npm run format:check` | Todos os arquivos no padrão |
 | Saúde do projeto | `npx expo-doctor` | 20/20 |
-| Roteiro de teste | `docs/roteiro_de_teste.md` | 26 casos (carga, offline, sincronização, CRUD, filtros, OCR, gráficos) |
+| Roteiro de teste | `docs/roteiro_de_teste.md` | 30 casos (carga, offline, sincronização, CRUD, filtros, OCR, gráficos) |
 
 O roteiro registra, para cada caso, os passos, o resultado esperado, o resultado obtido, onde e quando foi executado e a correção aplicada quando houve falha.
 
